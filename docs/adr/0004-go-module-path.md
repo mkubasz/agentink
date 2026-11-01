@@ -23,7 +23,7 @@ only a name to choose, and the repository does not exist yet.
 
 ## Alternatives
 
-- **A vanity import path** (`inkhub.dev/...`). Rejected for now: one more
+- **A vanity import path** (`agentink.dev/...`). Rejected for now: one more
   thing to host; can be added later with a redirect without renaming.
 - **Keep any upstream name.** Nothing upstream exists in this repository.
 
