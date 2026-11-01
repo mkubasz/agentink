@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mkubasz/ink-hub/internal/platform/bus"
-	"github.com/mkubasz/ink-hub/internal/platform/eventlog"
+	"github.com/mkubasz/agentink/internal/platform/bus"
+	"github.com/mkubasz/agentink/internal/platform/eventlog"
 )
 
 type fakeLog struct {

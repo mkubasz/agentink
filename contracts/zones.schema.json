@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://inkhub.local/contracts/zones.schema.json",
+  "$id": "https://agentink.local/contracts/zones.schema.json",
   "title": "Zones",
   "description": "zones.json: where every field, the QR and the corner marks sit on the rendered page, in millimetres from the top-left corner, read from the Typst template (ADR 0006).",
   "type": "object",

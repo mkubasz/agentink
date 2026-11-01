@@ -10,7 +10,7 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/mkubasz/ink-hub/internal/platform/eventlog"
+	"github.com/mkubasz/agentink/internal/platform/eventlog"
 )
 
 // Appender is what the bus writes to before it fans out: the project's log.

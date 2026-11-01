@@ -1,4 +1,4 @@
-# Ink Hub — rules for agents working in this repository
+# AgentInk — rules for agents working in this repository
 
 - **Read first:** `docs/specs/README.md` (the project hook), `docs/adr/0001`
   (contexts, events, slices and the import rule), `docs/adr/0003`

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://inkhub.local/contracts/event.schema.json",
+  "$id": "https://agentink.local/contracts/event.schema.json",
   "title": "Event envelope",
   "description": "One line of a project's events.jsonl (ADR 0005). `data` is validated per `type` by the slice that emits it.",
   "type": "object",

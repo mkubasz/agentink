@@ -2,11 +2,11 @@
 
 - **Status:** proposed
 - **Date:** 2026-11-01 (rewritten the same day after Q0 = clean room)
-- **Spec:** docs/specs/INK-1-ink-hub-foundation.md · **Decision points:** D0 (owner), D2 (settled by D0 and the owner's "mono repo")
+- **Spec:** docs/specs/INK-1-agentink-foundation.md · **Decision points:** D0 (owner), D2 (settled by D0 and the owner's "mono repo")
 
 ## Context
 
-Ink Hub is written from scratch (ADR 0003). The owner wants one repository
+AgentInk is written from scratch (ADR 0003). The owner wants one repository
 ("mono repo") for the Go hub and CLI, the Python OCR worker, the Typst
 templates, the contracts and the skill. The Go style guardrail is the
 `samber/cc-skills-golang` skill set (`docs/specs/README.md`), whose
@@ -50,7 +50,7 @@ docs/adr/  docs/architecture/  docs/specs/
   until the owner deletes it. The same holds for `datasets/handwriting/` in
   the data directory.
 - **Data at run time** is outside the repository, in the hub's data directory
-  (`$XDG_DATA_HOME/inkhub` by default, `--data` / `INKHUB_DATA` to change):
+  (`$XDG_DATA_HOME/agentink` by default, `--data` / `AGENTINK_DATA` to change):
   `projects/<project>/events.jsonl`, `projects/<project>/pages/<page-id>/…`,
   `datasets/handwriting/<id>/`.
 - **Lint** is the `.golangci.yml` from the `golang-lint` skill (MIT,
@@ -73,5 +73,5 @@ docs/adr/  docs/architecture/  docs/specs/
 - `make build` builds `inkd` and `ink`; `make worker` syncs the Python
   environment; `make contracts` runs the Go and Python contract tests over
   the shared examples (ADR 0008).
-- The repository root is Ink Hub's shape from the first commit; nothing from
+- The repository root is AgentInk's shape from the first commit; nothing from
   dark-factory is in it (ADR 0003).

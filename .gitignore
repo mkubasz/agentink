@@ -21,3 +21,7 @@ __pycache__/
 # local data and scratch
 /.data/
 /.e2e/
+
+# tool caches
+/.mypy_cache/
+/worker/.mypy_cache/

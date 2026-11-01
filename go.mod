@@ -1,4 +1,4 @@
-module github.com/mkubasz/ink-hub
+module github.com/mkubasz/agentink
 
 go 1.25
 

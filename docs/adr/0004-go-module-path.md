@@ -2,7 +2,7 @@
 
 - **Status:** proposed
 - **Date:** 2026-11-01 (rewritten the same day after Q0 = clean room)
-- **Spec:** docs/specs/INK-1-ink-hub-foundation.md · **Decision point:** D1
+- **Spec:** docs/specs/INK-1-agentink-foundation.md · **Decision point:** D1
 
 ## Context
 
@@ -13,13 +13,11 @@ only a name to choose, and the repository does not exist yet.
 
 ## Decision
 
-- The module path is the new repository's URL without the scheme. Until the
-  owner gives it, `go.mod` carries the placeholder
-  `github.com/mkubasz/ink-hub` (the architect's recommendation: the owner's
-  account, the product's name, lowercase, hyphenated).
-- Changing the placeholder is one `go mod edit -module` plus a `sed` over the
-  module's own imports, made before the first push; no third party imports
-  the module yet, so nothing else moves.
+- The module path is `github.com/mkubasz/agentink`: the owner named the
+  project `agentink` on 2026-11-01 and the account is the one the owner's
+  gist lives under. If the repository ends up elsewhere, the change is one
+  `go mod edit -module` plus a `sed` over the module's own imports, made
+  before the first push; no third party imports the module yet.
 - Binaries are `inkd` and `ink`; `go install <path>/cmd/ink@latest` is the
   install line in the README.
 
@@ -33,5 +31,5 @@ only a name to choose, and the repository does not exist yet.
 
 - The first push waits for the URL (also the one thing the push of this
   history needs).
-- Every other name in the repository (`inkd`, `ink`, `inkworker`, `INKHUB_*`
-  environment variables, the `inkhub` data directory) is ours from the start.
+- Every other name in the repository (`inkd`, `ink`, `inkworker`, `AGENTINK_*`
+  environment variables, the `agentink` data directory) is ours from the start.

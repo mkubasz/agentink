@@ -1,6 +1,6 @@
 # Acknowledgments
 
-Ink Hub is an independent work. Its ideas were shaped by two projects whose
+AgentInk is an independent work. Its ideas were shaped by two projects whose
 code is not used here (docs/adr/0003):
 
 - **AI Workflow Engine** by Michal Franc and its fork **dark-factory** by

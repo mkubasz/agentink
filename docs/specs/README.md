@@ -6,7 +6,7 @@ record: a line of summary, the plan with its gate while open, the log, and the
 final record after close. The long form (the actors' notes, the owner's
 summary) lives in the owner's vault, not here.
 
-Ink Hub is also a *consumer* of this folder: the `specflow` context reads
+AgentInk is also a *consumer* of this folder: the `specflow` context reads
 `## Clarify` sections and writes answers back (docs/adr/0001). The format is
 the spec flow's (`formats.md` of the gist); docs/architecture/inventory.md §7
 records how dark-factory's differed, as a lesson only (ADR 0003).
@@ -15,7 +15,7 @@ records how dark-factory's differed, as a lesson only (ADR 0003).
 
 - **ID prefix:** `INK`
 - **Plans:** the phases in the owner's brief, recorded as the tasks of
-  `docs/specs/INK-1-ink-hub-foundation.md` §Plan; the verdict per code area in
+  `docs/specs/INK-1-agentink-foundation.md` §Plan; the verdict per code area in
   `docs/architecture/inventory.md`.
 - **Decision record:** `docs/adr/NNNN-<slug>.md`, template in
   `docs/adr/README.md`. Status *proposed* until the spec closes.

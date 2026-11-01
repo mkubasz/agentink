@@ -2,11 +2,11 @@
 
 - **Status:** proposed
 - **Date:** 2026-11-01
-- **Spec:** docs/specs/INK-1-ink-hub-foundation.md · **Decision point:** settled by the owner's brief; details D3–D5
+- **Spec:** docs/specs/INK-1-agentink-foundation.md · **Decision point:** settled by the owner's brief; details D3–D5
 
 ## Context
 
-Ink Hub is written from scratch (ADR 0003), taking its concepts from
+AgentInk is written from scratch (ADR 0003), taking its concepts from
 dark-factory, whose shape — one flat `package main` of 128 files, a 17k-line
 domain package, agents reached through tmux from 30 files — is the lesson in
 what to avoid (`docs/architecture/inventory.md`). The owner has decided the

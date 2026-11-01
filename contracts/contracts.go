@@ -35,7 +35,7 @@ var ErrInvalid = errors.New("contracts: document does not match the schema")
 //go:embed *.schema.json
 var Schemas embed.FS
 
-const baseURL = "https://inkhub.local/contracts/"
+const baseURL = "https://agentink.local/contracts/"
 
 var (
 	compileOnce sync.Once

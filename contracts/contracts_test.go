@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/mkubasz/ink-hub/contracts"
+	"github.com/mkubasz/agentink/contracts"
 )
 
 func TestContracts_Examples(t *testing.T) {

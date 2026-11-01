@@ -2,7 +2,7 @@
 
 - **Status:** proposed
 - **Date:** 2026-11-01
-- **Spec:** docs/specs/INK-1-ink-hub-foundation.md · **Decision point:** settled by the brief; `typst query` deprecation verified
+- **Spec:** docs/specs/INK-1-agentink-foundation.md · **Decision point:** settled by the brief; `typst query` deprecation verified
 
 ## Context
 

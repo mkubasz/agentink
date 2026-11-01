@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://inkhub.local/contracts/ocr.schema.json",
+  "$id": "https://agentink.local/contracts/ocr.schema.json",
   "title": "OCR result",
   "description": "ocr.json: what the worker recognized per field, with its confidence and the crop it read (ADR 0007). Raw engine output stays here and never reaches the spec file.",
   "type": "object",

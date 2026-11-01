@@ -2,7 +2,7 @@
 
 - **Status:** proposed
 - **Date:** 2026-11-01 (revised after the critique the same day)
-- **Spec:** docs/specs/INK-1-ink-hub-foundation.md · **Decision points:** D3, D4 (both taken by the architect under brief §9, recorded as assumed)
+- **Spec:** docs/specs/INK-1-agentink-foundation.md · **Decision points:** D3, D4 (both taken by the architect under brief §9, recorded as assumed)
 
 ## Context
 
@@ -55,8 +55,8 @@ UUIDv7 printed as 32 uppercase hex digits would give 39, one QR version apart.
 That is a taste difference, so the choice was not put to the owner.
 
 **Single writer (D3, decided by the architect; forced by the brief's in-process bus).** Only `inkd` appends. The `ink` CLI talks
-to `inkd` over a Unix socket (`$XDG_RUNTIME_DIR/inkhub.sock`, JSON over HTTP;
-`--socket` / `INKHUB_SOCKET` to change) and never opens the log. When `inkd`
+to `inkd` over a Unix socket (`$XDG_RUNTIME_DIR/agentink.sock`, JSON over HTTP;
+`--socket` / `AGENTINK_SOCKET` to change) and never opens the log. When `inkd`
 is not running, `ink ask` fails fast with exit code 3 and the line
 `inkd is not running: start it with 'inkd' (or 'ink status')`. Appends are
 `write` + `fsync` under one mutex in the daemon; the bus fans out only after

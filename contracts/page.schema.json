@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://inkhub.local/contracts/page.schema.json",
+  "$id": "https://agentink.local/contracts/page.schema.json",
   "title": "Page",
   "description": "page.json: one render of one question revision (ADR 0005). The worker reads it to know the fields; the QR payload names the page.",
   "type": "object",

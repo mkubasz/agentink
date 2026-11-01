@@ -1,22 +1,22 @@
 ---
 id: INK-1
-title: Ink Hub foundation — inventory, architecture and the clean-room plan
+title: AgentInk foundation — inventory, architecture and the clean-room plan
 step: architect
 status: blocked
 mode: session
 branch: main
-repo: ink-hub
-vault: Tickets/INK-1-ink-hub-foundation
+repo: agentink
+vault: Tickets/INK-1-agentink-foundation
 created: 2026-11-01
 updated: 2026-11-01
 tags: [spec/INK-1, step/architect, branch/main, status/blocked]
 ---
 <!-- spec-card -->
 
-# INK-1 — Ink Hub foundation — inventory, architecture and the clean-room plan
+# INK-1 — AgentInk foundation — inventory, architecture and the clean-room plan
 
 ## Summary
-Build Ink Hub from scratch, taking dark-factory's ideas and none of its code: a local hub that renders coding agents' questions as handwriting-friendly e-ink pages, reads the owner's ink back and delivers the answer to the right agent. Phase 0 mapped the fork, fixed the architecture and the provenance rules, and set up the monorepo; it stops for the last answers before Phase 1.
+Build AgentInk from scratch, taking dark-factory's ideas and none of its code: a local hub that renders coding agents' questions as handwriting-friendly e-ink pages, reads the owner's ink back and delivers the answer to the right agent. Phase 0 mapped the fork, fixed the architecture and the provenance rules, and set up the monorepo; it stops for the last answers before Phase 1.
 
 ## Plan
 **Delivers:** the owner's brief, phases 0–6 · **Built by:** one implementer, one slice at a time (brief §9) · **Extra file:** none — `docs/adr/0001`–`0006` and `docs/architecture/inventory.md` hold the boundary · **ADR:** [0001](../adr/0001-bounded-contexts-events-and-vertical-slices.md), [0002](../adr/0002-monorepo-layout.md), [0003](../adr/0003-clean-room-rebuild-and-provenance.md), [0004](../adr/0004-go-module-path.md), [0005](../adr/0005-event-log-format-and-identifiers.md), [0006](../adr/0006-page-rendering-with-typst.md), all *proposed*
@@ -39,7 +39,7 @@ Build Ink Hub from scratch, taking dark-factory's ideas and none of its code: a 
 - [ ] 3.2 `ingestink`: an upload becomes `InkReceived` — **must not** emit twice for the same bytes of the same page (dedupe key `page_id` + `rev` + sha256), must ignore 0-byte and non-PDF/`.mark` files with an `IngestRejected` event · proved by `TestIngest_UploadEmitsInkReceived`, `TestIngest_SameBytesOnce`, `TestIngest_RejectsEmptyAndUnknown`
 - [ ] 3.2b `ingestink` watches configured sync folders too (Boox returns the annotated PDF through Syncthing, brief §6.3) · proved by `TestIngest_WatchedFolderEmitsInkReceived`
 - [ ] 3.3 Latency of the full loop on a Boox and a Supernote → `docs/architecture/latency.md` — owner-started gate row
-- [ ] 3.4 Ink Hub's threat model — `docs/architecture/security.md`: devices, tokens, the tailnet, handwriting as untrusted data, what a stamp gates (brief §7) · proved by the owner's review and by the tests it names
+- [ ] 3.4 AgentInk's threat model — `docs/architecture/security.md`: devices, tokens, the tailnet, handwriting as untrusted data, what a stamp gates (brief §7) · proved by the owner's review and by the tests it names
 - [ ] 4.1 `worker/`: `inkworker serve` (ADR 0007: Unix socket, `POST /v1/recognize`, `POST /v1/bench`, `GET /v1/engines`, `GET /healthz`), supervised by `inkd`; parse PDF/`.mark`/`.note`, align on QR and corner marks, crop zones, deterministic boxes, `stub` + one real engine, CER harness over `worker/samples/` (private) with DuckDB over the results; a run writes into `<page-dir>/.run-<ulid>/` and renames on success; `inkd` abandons a request after `worker.timeout` (default 5 min) and emits `RecognitionFailed` — D5, D9 · proved by `uv run --project worker pytest`, `TestWorkerSupervisor_RestartsAndTimesOut`, `TestRecognize_AbandonedRunLeavesNoPartialOutput`
 - [ ] 4.2 `recognizeanswer` / `confirmanswer`: recognized text becomes the owner's words only when every text field is at or above `ocr.confidence_min` (default 0.9), else after the confirmation page; checkbox-only answers carry the option label and any free text · proved by `TestRecognize_LowConfidenceRequestsConfirmation`, `TestConfirm_RejectsStalePage`, `TestConfirm_RawOcrNeverLeavesOcrJson`
 - [ ] 5.1 `agents`: the adapter interface with fakes; `herdr` (socket NDJSON), `rex` (`rex send` + `rex send-key enter`, `rex events --json`), `headless` · proved by `TestAdapter_Herdr_PromptOnBlockedAgent`, `TestAdapter_Rex_SendThenEnter`, `TestAdapter_Headless_Resume`
@@ -51,7 +51,7 @@ Build Ink Hub from scratch, taking dark-factory's ideas and none of its code: a 
 
 | Behaviour | Where | Command | Result |
 |---|---|---|---|
-| Ink Hub's Go packages and the worker pass their tests and lint; no upstream name in the tree | local | `make test && make lint && make provenance` | — |
+| AgentInk's Go packages and the worker pass their tests and lint; no upstream name in the tree | local | `make test && make lint && make provenance` | — |
 | A fake agent's `ink ask decision.json` ends with the answer in the spec file (`clarify answered`) and a `prompt` on the fake herdr that carries no answer text, through a WebDAV upload from `testdata/` and the stub engine | local | `make e2e` | — |
 | A page round-trips on a real Boox (Syncthing folder) and a real Supernote (WebDAV); the latency is in `docs/architecture/latency.md` | devices — the owner starts it | `ink ask testdata/decision.json` and the reader | — |
 | The chosen OCR engine reads the owner's Polish samples with CER ≤ 0.15 on text fields and 0 errors on boxes (threshold *assumed*; the owner sets the number) | local, or paid when the engine is an API — the owner starts it | `uv run --project worker inkworker bench worker/samples` | — |
@@ -59,14 +59,14 @@ Build Ink Hub from scratch, taking dark-factory's ideas and none of its code: a 
 ## Clarify
 
 ### Q0. Fork dark-factory, or a clean-room rewrite that owes no licence to the upstream author?
-- A. **Clean room: a new repository and module with no file from dark-factory; the inventory becomes a map of concepts; Ink Hub's licence is the owner's choice** (recommended).
+- A. **Clean room: a new repository and module with no file from dark-factory; the inventory becomes a map of concepts; AgentInk's licence is the owner's choice** (recommended).
 - B. Fork under PolyForm Noncommercial.
 - C. Fork from the last FSL-1.1-MIT commit.
 **Answer:** A — owner, 2026-11-01: "Piszemy od zera od razu poprawione i zgodne z dobrymi praktykami. Mono repo, python do ocr, zamiast chrome qdrant albo duckdb."
 
-### Q1. Which Go module path does Ink Hub use?
-- A. **The new repository's URL** (chosen; placeholder `github.com/mkubasz/ink-hub` until the URL is given).
-**Answer:** A — owner, 2026-11-01: "Tam jest dużo michal franc nazw w repo co jest błędne". Path pending the repository URL.
+### Q1. Which Go module path does AgentInk use?
+- A. **The new repository's URL** (chosen): `github.com/mkubasz/agentink`, from the owner's name for the project and the GitHub account the owner's gist lives under.
+**Answer:** A — owner, 2026-11-01: "Tam jest dużo michal franc nazw w repo co jest błędne"; the name: "nazwa agentink". The account is assumed to be `mkubasz`; the repository itself has to be created and attached by the owner.
 
 ### Q5. How does the hub call the Python worker?
 - A. **A process per job with a filesystem contract: `inkworker recognize <page-dir>` reads `page.json`, `zones.json` and the ink file, writes into `.run-<ulid>/` and renames to `crops/`, `ink/`, `ocr.json` on success, prints one JSON status line, exits; `inkd` enforces a timeout** (recommended) — no second daemon, testable from `testdata/`, the stub engine is a flag. Cost: a real engine loads its model per job; unmeasured until Phase 4 (vision-language candidates of 1–9 B parameters: tens of seconds on a laptop CPU is plausible), mitigated later by `inkworker serve` behind the same contract.
@@ -75,19 +75,20 @@ Build Ink Hub from scratch, taking dark-factory's ideas and none of its code: a 
 **Answer:** B — owner, 2026-11-01: "golang dostaje info o notatce i wywołuje api pythona do przerobienia. Cli nie musi wiedzieć o tym." Shape in ADR 0007: `inkworker serve` on a Unix socket, supervised by `inkd`; one synchronous request per job; the CLI never sees it.
 
 ### Q9. The index: is "zamiast chrome qdrant albo duckdb" read right?
-The architect reads it as "no SQLite index; DuckDB or Qdrant instead" ("chrome" taken as the embedded store, not the browser, which Ink Hub never used).
+The architect reads it as "no SQLite index; DuckDB or Qdrant instead" ("chrome" taken as the embedded store, not the browser, which AgentInk never used).
 - A. **DuckDB over the JSONL files for analytics (the CER harness, the dataset, reports), the daemon's projections in memory rebuilt from the log, Qdrant deferred to Phase 4 (crop similarity, with DuckDB's `vss` extension tried first)** (recommended) — no database inside `inkd`, one analytical engine that reads the log as it is. Cost: `duckdb-go` is CGO if `ink` ever needs it in process; until then DuckDB lives in the worker and the CLI shells out.
 - B. **DuckDB inside `inkd` as the index** (`github.com/duckdb/duckdb-go`) — SQL over projections in the daemon. Cost: CGO in the daemon; at kilobytes of events it buys nothing over memory.
 - C. **Qdrant as the store** — a vector database for an inbox is the wrong tool; it would hold embeddings of crops only.
 **Answer:** A — owner, 2026-11-01: "1A".
 
-### Q10. Which licence does Ink Hub carry?
+### Q10. Which licence does AgentInk carry?
 - A. **MIT** (recommended) — the shortest, the one the samber skills and most Go tooling use; no patent clause.
 - B. **Apache-2.0** — an explicit patent grant and a NOTICE mechanism; longer.
-**Answer:** —
+- C. **The owner's own: all rights reserved, no open-source grant.**
+**Answer:** C — owner, 2026-11-01: "Moja licencja" — `LICENSE` holds the copyright notice and no grant; an open licence can replace it later.
 
 ### Operational
-- The repository URL (sets the module path; enables the first push): —
+- The repository `github.com/mkubasz/agentink` has to exist and be attached to the session (or its URL confirmed) before the first push: — (the session's attempt to attach it was refused by the sandbox's permission policy on 2026-11-01)
 
 ### Settled by the architect (brief §9), open to objection
 - **D3 single writer**: only `inkd` appends; `ink` talks to it over a Unix socket and fails fast (exit 3) when the daemon is down (ADR 0005).
@@ -98,7 +99,8 @@ The architect reads it as "no SQLite index; DuckDB or Qdrant instead" ("chrome" 
 
 ## Decisions
 - D0 — Fork or clean room? → A, clean room, one monorepo, Python for OCR — owner, 2026-11-01
-- D1 — Module path? → A, the repository's URL; placeholder until given — owner, 2026-11-01
+- D1 — Module path? → A, `github.com/mkubasz/agentink` — owner, 2026-11-01 ("nazwa agentink"; the account assumed)
+- D10 — Licence? → C, the owner's own, all rights reserved — owner, 2026-11-01 ("Moja licencja")
 - D2 — Layout? → monorepo per ADR 0002 — settled by D0 and the owner's "mono repo", 2026-11-01
 - D3 — Who writes the log? → A, only `inkd` — assumed, architect, 2026-11-01
 - D4 — Identifiers? → A, ULID; QR payload uppercase — assumed, architect, 2026-11-01
@@ -114,3 +116,4 @@ The architect reads it as "no SQLite index; DuckDB or Qdrant instead" ("chrome" 
 - 2026-11-01 12:05 — critique settled: 3 blocks, 16 should, 7 note; the round cut; D3, D4, D6, D7, D8 taken as assumed
 - 2026-11-01 12:30 — clarify answered: Q0 = A — owner: "Piszemy od zera od razu poprawione i zgodne z dobrymi praktykami. Mono repo, python do ocr, zamiast chrome qdrant albo duckdb"; the spec moved to the new monorepo; ADRs 0002–0004 rewritten; the fork-only tasks, Q2, D6 and D8 dropped; Q9 (index reading) and Q10 (licence) added
 - 2026-11-01 13:10 — clarify answered: Q5 = B ("golang dostaje info o notatce i wywołuje api pythona do przerobienia. Cli nie musi wiedzieć o tym"), Q9 = A ("1A"); ADR 0007 (worker service) and 0008 (contracts validated, not generated) added; Q10 (licence) and the repository URL still open
+- 2026-11-01 13:40 — clarify answered: Q10 = C ("Moja licencja"), the name agentink ("nazwa agentink"); the module renamed to github.com/mkubasz/agentink; LICENSE added

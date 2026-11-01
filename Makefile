@@ -1,4 +1,4 @@
-# Ink Hub — one entry point for the Go hub and the Python worker.
+# AgentInk — one entry point for the Go hub and the Python worker.
 .PHONY: build test lint provenance e2e worker contracts clean
 
 GO      ?= go

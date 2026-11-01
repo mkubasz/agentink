@@ -2,7 +2,7 @@
 
 - **Status:** proposed
 - **Date:** 2026-11-01 (rewritten the same day: supersedes the strangler plan after Q0 = clean room)
-- **Spec:** docs/specs/INK-1-ink-hub-foundation.md · **Decision point:** D0
+- **Spec:** docs/specs/INK-1-agentink-foundation.md · **Decision point:** D0
 
 ## Context
 
@@ -12,7 +12,7 @@ Noncommercial 1.0.0 from 2026-10-23) and found that the owner's goal — no
 obligation to the upstream author — cannot be met by refactoring a copy: a
 work that contains his code, however moved or edited, stays a derivative work.
 The owner decided (2026-11-01): "Piszemy od zera od razu poprawione i zgodne z
-dobrymi praktykami." Ideas are not copyrightable; expression is. Ink Hub takes
+dobrymi praktykami." Ideas are not copyrightable; expression is. AgentInk takes
 the ideas.
 
 ## Decision
@@ -32,9 +32,9 @@ the ideas.
 - **Formats come from the spec flow**, not from dark-factory: the clarify
   grammar, the decision line `D<n> — <question> → <letter>, <option> — <owner,
   date>` and the `clarify answered` log line are the gist's `formats.md`, and
-  Ink Hub's own `contracts/` define everything else.
+  AgentInk's own `contracts/` define everything else.
 - **Provenance rules, kept for the life of the project:**
-  1. Nobody writes Ink Hub code with a dark-factory source file open. The
+  1. Nobody writes AgentInk code with a dark-factory source file open. The
      inventory and the spec flow's documents are the references.
   2. dark-factory may be installed and run on the owner's machine as a black
      box to compare behaviour (its licence permits that use); its output, not
@@ -46,8 +46,9 @@ the ideas.
      and `ACKNOWLEDGMENTS.md`.
   5. The inspiration is acknowledged by name in `ACKNOWLEDGMENTS.md`, with
      no text copied from either project.
-- **Licence:** the owner's choice between MIT and Apache-2.0 (asked in the
-  spec's round); `LICENSE` is added with that answer, before the first push.
+- **Licence:** the owner's own — all rights reserved, no open-source grant
+  (`LICENSE`, chosen 2026-11-01: "Moja licencja"); an open licence can replace
+  the file at any time.
 - **Nothing is migrated**, so there is no legacy tier, no baseline allowlist
   and no park/drop ledger: `make test` and `make lint` are the whole gate.
 
@@ -70,5 +71,5 @@ the ideas.
   tests in Phase 1–2.
 - Phase 0's `NOTICE` draft (the PolyForm notices) is withdrawn; it is replaced
   by `LICENSE` and `ACKNOWLEDGMENTS.md`.
-- The fork clone and its `ink-hub/phase-0` branch stay on the research
+- The fork clone and its `agentink/phase-0` branch stay on the research
   machine as the record of Phase 0 and are never pushed into this repository.

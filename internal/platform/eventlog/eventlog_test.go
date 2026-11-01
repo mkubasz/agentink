@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mkubasz/ink-hub/internal/platform/eventlog"
+	"github.com/mkubasz/agentink/internal/platform/eventlog"
 )
 
 func sample(id string, at time.Time) eventlog.Envelope {

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://inkhub.local/contracts/question.schema.json",
+  "$id": "https://agentink.local/contracts/question.schema.json",
   "title": "Question",
   "description": "What an agent hands to `ink ask` (and the `data` of QuestionAsked). One question, one page.",
   "type": "object",

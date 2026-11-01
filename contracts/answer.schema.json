@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://inkhub.local/contracts/answer.schema.json",
+  "$id": "https://agentink.local/contracts/answer.schema.json",
   "title": "Answer",
   "description": "The hub's view of an answer to one page: recognized, awaiting confirmation, confirmed (then `words` is the owner's text) or rejected (stale page). The `data` of AnswerRecognized, ConfirmationRequested, AnswerConfirmed and AnswerRejected.",
   "type": "object",
