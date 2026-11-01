@@ -1,0 +1,23 @@
+# binaries and build output
+/bin/
+/inkd
+/ink
+*.test
+*.prof
+cover.out
+
+# the owner's handwriting: private by default (ADR 0002)
+/worker/samples/
+/datasets/
+
+# python
+/worker/.venv/
+__pycache__/
+*.pyc
+/worker/.pytest_cache/
+/worker/.ruff_cache/
+/worker/.mypy_cache/
+
+# local data and scratch
+/.data/
+/.e2e/
