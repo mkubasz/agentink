@@ -91,9 +91,10 @@ and a test keeps it so. A question flagged `critical: true` (payment, deploy,
 anything irreversible) is answered only from a `stamp` zone; free text on such
 a page is recorded but is not an approval.
 
-**Partial failure.** The worker writes into `<page-dir>/.run-<ulid>/` and
-renames into place on success; a run killed by `inkd` after `worker.timeout`
-leaves no partial `ocr.json` and emits `RecognitionFailed`. The daemon's own
+**Partial failure.** The worker (a local service `inkd` supervises, ADR
+0007) writes into `<page-dir>/.run-<ulid>/` and renames into place on
+success; a request that `inkd` abandons after `worker.timeout` leaves no
+partial `ocr.json` and emits `RecognitionFailed`. The daemon's own
 appends are `write` + `fsync` under one mutex; a crash mid-write leaves a
 truncated last line that the reader skips (ADR 0005). `ingestink` deduplicates
 on `page_id` + `rev` + the file's sha256, because readers and sync tools upload

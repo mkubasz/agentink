@@ -27,12 +27,12 @@ Build Ink Hub from scratch, taking dark-factory's ideas and none of its code: a 
 - [ ] 0.3 The monorepo scaffold: `go.mod` (placeholder path), `Makefile`, `.golangci.yml`, `.gitignore`, `README.md`, `CLAUDE.md`, `ACKNOWLEDGMENTS.md`, `worker/pyproject.toml` · proved by `make lint` on an empty tree and `uv sync --project worker`
 - [ ] 0.4 The owner's answers to Q5, the licence, the repository URL and the D9 reading recorded here; `LICENSE` added; `go.mod` path set; the first push
 - [ ] 1.1 `internal/platform`: eventlog (append + fsync, truncated-last-line skip, replay), bus (sync fan-out, error isolation), lock, config — D3, D4 (ADR 0005) · proved by `TestEventLog_AppendReplay`, `TestEventLog_SkipsTruncatedLastLine`, `TestBus_FanoutIsolatesErrors`
-- [ ] 1.2 `contracts/`: JSON Schemas for event, page, zones, answer, ocr; Go types generated into `internal/platform/contracts`; example validation in Go and Python · proved by `TestContracts_Examples`, `pytest worker/tests/test_contracts.py`
+- [ ] 1.2 `contracts/`: JSON Schemas for event, question, page, zones, answer, ocr with valid and invalid examples; `internal/platform/contracts` embeds and validates them; the worker validates with `jsonschema` — ADR 0008 · proved by `TestContracts_Examples`, `pytest worker/tests/test_contracts.py`
 - [ ] 1.3 Slice `askquestion` + `ink ask` + `ink inbox` (`--json`); the inbox projection rebuilt from the log — D3, D9 · proved by `TestAskQuestion_AppendsEventAndProjectsInbox`, `TestInbox_RebuiltFromLog`, `TestInkAsk_CapturesHerdrAndRexEnv`, `TestInkAsk_FailsFastWithoutDaemon`
 - [ ] 1.4 `ink answer <id> --json`, `ink show <md>`, `ink brief`, `ink status` · proved by `TestInkAnswer_ReturnsConfirmedAnswerOnly`, `TestInkStatus_WithoutDaemonExit3`
 - [ ] 1.5 Import-boundary test — ADR 0001 · proved by `TestArch_SlicesImportOnlyDomainAndPlatform`
 - [ ] 1.6 Provenance check — ADR 0003 rule 4 · proved by `make provenance` (a grep that fails on upstream names outside the two allowed files)
-- [ ] 1.7 A thin end-to-end skeleton from Phase 1: fake agent → `ink ask` → stub render → stub ingest → stub worker → `syncspec` → fake adapter; every later phase replaces one stub · proved by `make e2e` green at the end of every phase
+- [ ] 1.7 A thin end-to-end skeleton from Phase 1: fake agent → `ink ask` → stub render → stub ingest → a fake worker speaking the ADR 0007 API with the `stub` engine → `syncspec` → fake adapter; every later phase replaces one stub · proved by `make e2e` green at the end of every phase
 - [ ] 2.1 `pages`: the `decision` template, zones via `typst eval` (ADR 0006), golden PDF and `zones.json`; the QR payload `INK:<page-ulid>:<rev>` · proved by `TestRenderDecision_Golden`, `TestQR_PayloadIsAlphanumeric`
 - [ ] 3.1 `platform/webdav` + `publishpage`: `Ink/<project>/…` per device token, Tailscale-only listener, a PUT cap (64 MiB default, `webdav.max_upload`) · proved by `TestWebDAV_DeviceTokenScopesTree`, `TestWebDAV_RejectsOversizedPut`, `TestListener_RefusesNonTailscale`
 - [ ] 3.1b Device pairing and revocation: `ink device add <name>` prints a one-time pairing code, tokens are hashed at rest, `ink device revoke <name>` ends access, a device sees only the roots it is scoped to · proved by `TestDevice_PairRevoke`, `TestDevice_RevokedTokenGets401`
@@ -40,7 +40,7 @@ Build Ink Hub from scratch, taking dark-factory's ideas and none of its code: a 
 - [ ] 3.2b `ingestink` watches configured sync folders too (Boox returns the annotated PDF through Syncthing, brief §6.3) · proved by `TestIngest_WatchedFolderEmitsInkReceived`
 - [ ] 3.3 Latency of the full loop on a Boox and a Supernote → `docs/architecture/latency.md` — owner-started gate row
 - [ ] 3.4 Ink Hub's threat model — `docs/architecture/security.md`: devices, tokens, the tailnet, handwriting as untrusted data, what a stamp gates (brief §7) · proved by the owner's review and by the tests it names
-- [ ] 4.1 `worker/`: parse PDF/`.mark`/`.note`, align on QR and corner marks, crop zones, deterministic boxes, `stub` + one real engine, CER harness over `worker/samples/` (private) with DuckDB over the results; a run writes into `<page-dir>/.run-<ulid>/` and renames on success; `inkd` kills a run after `worker.timeout` (default 5 min) and emits `RecognitionFailed` — D5, D9 · proved by `uv run --project worker pytest`, `TestRecognize_KilledRunLeavesNoPartialOutput`
+- [ ] 4.1 `worker/`: `inkworker serve` (ADR 0007: Unix socket, `POST /v1/recognize`, `POST /v1/bench`, `GET /v1/engines`, `GET /healthz`), supervised by `inkd`; parse PDF/`.mark`/`.note`, align on QR and corner marks, crop zones, deterministic boxes, `stub` + one real engine, CER harness over `worker/samples/` (private) with DuckDB over the results; a run writes into `<page-dir>/.run-<ulid>/` and renames on success; `inkd` abandons a request after `worker.timeout` (default 5 min) and emits `RecognitionFailed` — D5, D9 · proved by `uv run --project worker pytest`, `TestWorkerSupervisor_RestartsAndTimesOut`, `TestRecognize_AbandonedRunLeavesNoPartialOutput`
 - [ ] 4.2 `recognizeanswer` / `confirmanswer`: recognized text becomes the owner's words only when every text field is at or above `ocr.confidence_min` (default 0.9), else after the confirmation page; checkbox-only answers carry the option label and any free text · proved by `TestRecognize_LowConfidenceRequestsConfirmation`, `TestConfirm_RejectsStalePage`, `TestConfirm_RawOcrNeverLeavesOcrJson`
 - [ ] 5.1 `agents`: the adapter interface with fakes; `herdr` (socket NDJSON), `rex` (`rex send` + `rex send-key enter`, `rex events --json`), `headless` · proved by `TestAdapter_Herdr_PromptOnBlockedAgent`, `TestAdapter_Rex_SendThenEnter`, `TestAdapter_Headless_Resume`
 - [ ] 5.2 `specflow`: the markdown and clarify grammar written from the spec flow's `formats.md`; `syncspec` writes the answer in the owner's words, the `D<n> — … → <letter>, … — owner, <date>` line and the `clarify answered` log line · proved by `TestSyncSpec_WritesConfirmedWordsAndLogLine`, `TestSyncSpec_RoundTripsThisFile` (this spec is the golden)
@@ -72,14 +72,14 @@ Build Ink Hub from scratch, taking dark-factory's ideas and none of its code: a 
 - A. **A process per job with a filesystem contract: `inkworker recognize <page-dir>` reads `page.json`, `zones.json` and the ink file, writes into `.run-<ulid>/` and renames to `crops/`, `ink/`, `ocr.json` on success, prints one JSON status line, exits; `inkd` enforces a timeout** (recommended) — no second daemon, testable from `testdata/`, the stub engine is a flag. Cost: a real engine loads its model per job; unmeasured until Phase 4 (vision-language candidates of 1–9 B parameters: tens of seconds on a laptop CPU is plausible), mitigated later by `inkworker serve` behind the same contract.
 - B. **A long-running worker service on localhost (HTTP)** — warm models. Cost: two daemons, a protocol and health checks before any model is chosen.
 - C. **The worker tails the event log and writes its own events** — decoupling. Cost: a second writer, against D3.
-**Answer:** —
+**Answer:** B — owner, 2026-11-01: "golang dostaje info o notatce i wywołuje api pythona do przerobienia. Cli nie musi wiedzieć o tym." Shape in ADR 0007: `inkworker serve` on a Unix socket, supervised by `inkd`; one synchronous request per job; the CLI never sees it.
 
 ### Q9. The index: is "zamiast chrome qdrant albo duckdb" read right?
 The architect reads it as "no SQLite index; DuckDB or Qdrant instead" ("chrome" taken as the embedded store, not the browser, which Ink Hub never used).
 - A. **DuckDB over the JSONL files for analytics (the CER harness, the dataset, reports), the daemon's projections in memory rebuilt from the log, Qdrant deferred to Phase 4 (crop similarity, with DuckDB's `vss` extension tried first)** (recommended) — no database inside `inkd`, one analytical engine that reads the log as it is. Cost: `duckdb-go` is CGO if `ink` ever needs it in process; until then DuckDB lives in the worker and the CLI shells out.
 - B. **DuckDB inside `inkd` as the index** (`github.com/duckdb/duckdb-go`) — SQL over projections in the daemon. Cost: CGO in the daemon; at kilobytes of events it buys nothing over memory.
 - C. **Qdrant as the store** — a vector database for an inbox is the wrong tool; it would hold embeddings of crops only.
-**Answer:** —
+**Answer:** A — owner, 2026-11-01: "1A".
 
 ### Q10. Which licence does Ink Hub carry?
 - A. **MIT** (recommended) — the shortest, the one the samber skills and most Go tooling use; no patent clause.
@@ -103,7 +103,8 @@ The architect reads it as "no SQLite index; DuckDB or Qdrant instead" ("chrome" 
 - D3 — Who writes the log? → A, only `inkd` — assumed, architect, 2026-11-01
 - D4 — Identifiers? → A, ULID; QR payload uppercase — assumed, architect, 2026-11-01
 - D7 — Gate scope? → A, test + lint + provenance on every commit — assumed, architect, 2026-11-01
-- D9 — Index? → DuckDB or Qdrant instead of SQLite — owner, 2026-11-01 ("zamiast chrome qdrant albo duckdb"); the reading and the split (Q9) pending
+- D5 — How does the hub call the worker? → B, a local API the daemon calls; the CLI knows nothing of it — owner, 2026-11-01 (ADR 0007)
+- D9 — Index? → A, DuckDB over the JSONL for analytics, projections in memory, Qdrant deferred — owner, 2026-11-01 ("1A"; ADR 0005)
 
 ## Log
 - 2026-11-01 09:50 — spec opened in the dark-factory clone (Phase 0 research)
@@ -112,3 +113,4 @@ The architect reads it as "no SQLite index; DuckDB or Qdrant instead" ("chrome" 
 - 2026-11-01 11:40 — owner: "Zrobimy poprawy kodu i refaktor by nie zostało potrzeby trzymania licencji do Michała" — Q0 added; the licence history traced
 - 2026-11-01 12:05 — critique settled: 3 blocks, 16 should, 7 note; the round cut; D3, D4, D6, D7, D8 taken as assumed
 - 2026-11-01 12:30 — clarify answered: Q0 = A — owner: "Piszemy od zera od razu poprawione i zgodne z dobrymi praktykami. Mono repo, python do ocr, zamiast chrome qdrant albo duckdb"; the spec moved to the new monorepo; ADRs 0002–0004 rewritten; the fork-only tasks, Q2, D6 and D8 dropped; Q9 (index reading) and Q10 (licence) added
+- 2026-11-01 13:10 — clarify answered: Q5 = B ("golang dostaje info o notatce i wywołuje api pythona do przerobienia. Cli nie musi wiedzieć o tym"), Q9 = A ("1A"); ADR 0007 (worker service) and 0008 (contracts validated, not generated) added; Q10 (licence) and the repository URL still open

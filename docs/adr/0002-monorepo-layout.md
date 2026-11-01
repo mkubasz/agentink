@@ -20,7 +20,7 @@ path equal to the repository URL.
 go.mod  go.sum  Makefile  .golangci.yml  .gitignore  README.md  CLAUDE.md  LICENSE
 cmd/inkd/              # the hub daemon: flags, wiring, Run()
 cmd/ink/               # the CLI for agents and the owner
-internal/platform/     # eventlog, bus, lock, config, webdav, auth, mdfile, cli, contracts (generated Go types)
+internal/platform/     # eventlog, bus, lock, config, webdav, auth, mdfile, cli, contracts (schemas embedded, validation)
 internal/projects/     # each context: domain/ + one folder per slice
 internal/inbox/
 internal/pages/        # incl. pages/templates/*.typ (go:embed) and pages/fonts/
@@ -36,15 +36,16 @@ docs/adr/  docs/architecture/  docs/specs/
 - **One Go module at the root**, one Python project under `worker/`. No
   `go.work`: there is one module. The Makefile is the one entry point for
   both (`make test` runs `go test` and `uv run pytest`).
-- **No `pkg/`** until a consumer outside the module exists; the generated
-  contract types live in `internal/platform/contracts` next to their only
-  consumer and move to `pkg/` in their own commit the day a mod or a second
-  tool imports them.
+- **No `pkg/`** until a consumer outside the module exists; the contract
+  validation and the hand-written types (ADR 0008) live in
+  `internal/platform/contracts` and move to `pkg/` in their own commit the
+  day a mod or a second tool imports them.
 - **Typst templates are embedded** in `internal/pages/templates/` with
   `//go:embed`; golden PDFs and zone files in
   `internal/pages/renderpage/testdata/`.
 - **The worker** has its own `pyproject.toml` (`uv`), `inkworker/` as the
-  package, `tests/`, and `samples/` for the owner's handwriting — **private
+  package (a local HTTP service, ADR 0007), `tests/`, and `samples/` for the
+  owner's handwriting — **private
   by default**, gitignored, nothing published unless the owner decides, kept
   until the owner deletes it. The same holds for `datasets/handwriting/` in
   the data directory.
@@ -70,7 +71,7 @@ docs/adr/  docs/architecture/  docs/specs/
 ## Consequences
 
 - `make build` builds `inkd` and `ink`; `make worker` syncs the Python
-  environment; `make contracts` regenerates the Go types from the schemas and
-  checks the worker's models against them.
+  environment; `make contracts` runs the Go and Python contract tests over
+  the shared examples (ADR 0008).
 - The repository root is Ink Hub's shape from the first commit; nothing from
   dark-factory is in it (ADR 0003).

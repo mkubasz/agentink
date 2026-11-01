@@ -14,7 +14,7 @@ looks like and where projections live. dark-factory's six JSONL logs are the
 lesson, not the seed (ADR 0003): no ids, no revisions, three time formats and
 three bad-line policies (`docs/architecture/inventory.md` §6.1). The owner
 added on 2026-11-01: "zamiast chrome qdrant albo duckdb" — read as "no
-SQLite; DuckDB or Qdrant for the index", to be confirmed.
+SQLite; DuckDB or Qdrant for the index", confirmed as option A below.
 
 Identifiers appear in three places that constrain them: the log, the file
 system (`pages/<page-id>/`) and the QR code printed on every page
@@ -62,7 +62,7 @@ is not running, `ink ask` fails fast with exit code 3 and the line
 `write` + `fsync` under one mutex in the daemon; the bus fans out only after
 the fsync returned.
 
-**Projections (D9, recommended, pending the owner's confirmation).** `inkd`
+**Projections (D9, confirmed by the owner on 2026-11-01: "1A").** `inkd`
 holds its projections (the inbox, the project board, the open deliveries) in
 memory and rebuilds them from the logs at start; `ink inbox` asks the daemon.
 No SQLite. **DuckDB** is the query engine over the same JSONL files for

@@ -12,6 +12,8 @@ Files are `NNNN-<slug>.md`, written in English, and never rewritten once
 | [0004](0004-go-module-path.md) | Go module path | proposed |
 | [0005](0005-event-log-format-and-identifiers.md) | Event log format and identifiers | proposed |
 | [0006](0006-page-rendering-with-typst.md) | Page rendering with Typst, answer zones from the template | proposed |
+| [0007](0007-worker-as-a-local-service.md) | The Python worker is a local service that `inkd` supervises | proposed |
+| [0008](0008-contracts-validated-not-generated.md) | Contracts: JSON Schema as the source of truth, validated on both sides | proposed |
 
 ## Template
 
