@@ -1,0 +1,8 @@
+{
+  "kind": "critique",
+  "title": "Critique of the label design",
+  "items": [
+    {"id": "F1", "severity": "blocks", "where": "internal/labels/print.go:42", "text": "the printer name is taken from the request body"},
+    {"id": "F2", "severity": "should", "where": "docs/specs/SHP-12-labels.md:30", "text": "no gate row for a jammed printer"}
+  ]
+}

@@ -34,8 +34,10 @@ e2e:
 worker:
 	$(UV) sync --project worker
 
+# ADR 0008: the schemas are the source of truth; both sides prove their examples.
 contracts:
-	@echo "contracts: Phase 1.2 adds the generator"; exit 1
+	$(GO) test ./contracts/... -count=1
+	$(UV) run --project worker pytest -q worker/tests/test_contracts.py
 
 clean:
 	rm -rf bin cover.out

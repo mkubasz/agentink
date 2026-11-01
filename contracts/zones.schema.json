@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://inkhub.local/contracts/zones.schema.json",
+  "title": "Zones",
+  "description": "zones.json: where every field, the QR and the corner marks sit on the rendered page, in millimetres from the top-left corner, read from the Typst template (ADR 0006).",
+  "type": "object",
+  "required": ["page_id", "rev", "page_size_mm", "zones"],
+  "additionalProperties": false,
+  "properties": {
+    "page_id": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "rev": { "type": "integer", "minimum": 1 },
+    "page_size_mm": {
+      "type": "object", "required": ["w", "h"], "additionalProperties": false,
+      "properties": { "w": { "type": "number", "exclusiveMinimum": 0 }, "h": { "type": "number", "exclusiveMinimum": 0 } }
+    },
+    "zones": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["zone", "kind", "page", "x", "y", "w", "h"],
+        "additionalProperties": false,
+        "properties": {
+          "zone": { "type": "string", "minLength": 1, "maxLength": 48 },
+          "kind": { "enum": ["field", "option", "fiducial", "qr"] },
+          "field": { "type": "string", "description": "The field id for kind field/option." },
+          "option": { "type": "string", "description": "The option key for kind option." },
+          "page": { "type": "integer", "minimum": 1 },
+          "x": { "type": "number", "minimum": 0 },
+          "y": { "type": "number", "minimum": 0 },
+          "w": { "type": "number", "exclusiveMinimum": 0 },
+          "h": { "type": "number", "exclusiveMinimum": 0 }
+        }
+      }
+    }
+  }
+}

@@ -3,13 +3,13 @@ name = "inkworker"
 version = "0.0.1"
 description = "Ink Hub worker: pixels and models (page parsing, alignment, zone crops, deterministic boxes, OCR engines, the CER harness)."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["jsonschema>=4.23"]
 
 [project.scripts]
 inkworker = "inkworker.cli:main"
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11", "types-jsonschema>=4.23"]
 
 [tool.ruff]
 line-length = 100

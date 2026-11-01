@@ -20,14 +20,14 @@ path equal to the repository URL.
 go.mod  go.sum  Makefile  .golangci.yml  .gitignore  README.md  CLAUDE.md  LICENSE
 cmd/inkd/              # the hub daemon: flags, wiring, Run()
 cmd/ink/               # the CLI for agents and the owner
-internal/platform/     # eventlog, bus, lock, config, webdav, auth, mdfile, cli, contracts (schemas embedded, validation)
+internal/platform/     # eventlog, bus, lock, config, webdav, auth, mdfile, cli
 internal/projects/     # each context: domain/ + one folder per slice
 internal/inbox/
 internal/pages/        # incl. pages/templates/*.typ (go:embed) and pages/fonts/
 internal/ink/
 internal/agents/
 internal/specflow/
-contracts/             # JSON Schema: event, page, zones, answer, ocr (the one source for Go and Python types)
+contracts/             # JSON Schema (event, question, page, zones, ocr, answer) + the Go package that embeds and validates them
 worker/                # Python (uv): pyproject.toml, inkworker/, tests/, samples/ (private)
 skills/ink/SKILL.md    # the skill for Claude Code and pi
 docs/adr/  docs/architecture/  docs/specs/
@@ -36,10 +36,10 @@ docs/adr/  docs/architecture/  docs/specs/
 - **One Go module at the root**, one Python project under `worker/`. No
   `go.work`: there is one module. The Makefile is the one entry point for
   both (`make test` runs `go test` and `uv run pytest`).
-- **No `pkg/`** until a consumer outside the module exists; the contract
-  validation and the hand-written types (ADR 0008) live in
-  `internal/platform/contracts` and move to `pkg/` in their own commit the
-  day a mod or a second tool imports them.
+- **No `pkg/`** until a consumer outside the module exists. The one
+  importable package is `contracts/` (the schemas and their validator, ADR
+  0008), which sits at the root because `go:embed` cannot reach a parent
+  directory and because it is the contract other tools may import.
 - **Typst templates are embedded** in `internal/pages/templates/` with
   `//go:embed`; golden PDFs and zone files in
   `internal/pages/renderpage/testdata/`.

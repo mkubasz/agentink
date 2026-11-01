@@ -1,0 +1,11 @@
+{
+  "kind": "decision",
+  "title": "Which printer does the label go to?",
+  "body": "The shop has a thermal printer at the till and a laser in the back office.",
+  "spec": {"path": "docs/specs/SHP-12-labels.md", "anchor": "Q1"},
+  "options": [
+    {"key": "A", "label": "The thermal printer at the till", "recommended": true, "why": "it is where labels are used", "cost": "one driver call"},
+    {"key": "B", "label": "Any system printer", "cost": "a print dialog and a layout per printer"}
+  ],
+  "agent": {"orchestrator": "herdr", "herdr": {"pane_id": "w1:p3", "workspace_id": "w1"}}
+}

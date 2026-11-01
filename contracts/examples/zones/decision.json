@@ -1,0 +1,16 @@
+{
+  "page_id": "01JBQ4PB2D6G0J3K4M5N6P7Q8R",
+  "rev": 1,
+  "page_size_mm": {"w": 148, "h": 210},
+  "zones": [
+    {"zone": "qr", "kind": "qr", "page": 1, "x": 118, "y": 10, "w": 20, "h": 20},
+    {"zone": "mark-tl", "kind": "fiducial", "page": 1, "x": 5, "y": 5, "w": 5, "h": 5},
+    {"zone": "mark-tr", "kind": "fiducial", "page": 1, "x": 138, "y": 5, "w": 5, "h": 5},
+    {"zone": "mark-bl", "kind": "fiducial", "page": 1, "x": 5, "y": 200, "w": 5, "h": 5},
+    {"zone": "mark-br", "kind": "fiducial", "page": 1, "x": 138, "y": 200, "w": 5, "h": 5},
+    {"zone": "choice-A", "kind": "option", "field": "choice", "option": "A", "page": 1, "x": 12, "y": 60, "w": 8, "h": 8},
+    {"zone": "choice-B", "kind": "option", "field": "choice", "option": "B", "page": 1, "x": 12, "y": 72, "w": 8, "h": 8},
+    {"zone": "otherwise", "kind": "field", "field": "otherwise", "page": 1, "x": 12, "y": 90, "w": 124, "h": 30},
+    {"zone": "sketch", "kind": "field", "field": "sketch", "page": 1, "x": 12, "y": 130, "w": 124, "h": 60}
+  ]
+}

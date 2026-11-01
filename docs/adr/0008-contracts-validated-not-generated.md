@@ -19,8 +19,10 @@ types from the schemas or to write them by hand.
   Each schema ships with examples under `contracts/examples/<name>/` (valid)
   and `contracts/examples/<name>/invalid/` (must fail).
 - **Types are written by hand on each side and proven by tests, not
-  generated.** Go: `internal/platform/contracts` embeds the schemas and
-  exposes `Validate(name, doc)`; a test validates every example and every
+  generated.** Go: the `contracts` package at the repository root (next to
+  the schemas, so `go:embed` can reach them) exposes `Validate(name, doc)`;
+  it is the one package meant to be importable from outside the module,
+  because it *is* the contract; a test validates every example and every
   Go type's marshalled output. Python: the worker validates its inputs and
   its `ocr.json` with the `jsonschema` package against the same files; a test
   runs the same examples. `make contracts` runs both test sets.

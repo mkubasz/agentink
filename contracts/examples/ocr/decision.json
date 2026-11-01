@@ -1,0 +1,11 @@
+{
+  "page_id": "01JBQ4PB2D6G0J3K4M5N6P7Q8R",
+  "rev": 1,
+  "engine": {"name": "stub", "version": "0.0.1"},
+  "alignment": {"ok": true, "qr_payload": "INK:01JBQ4PB2D6G0J3K4M5N6P7Q8R:1", "residual_px": 1.4},
+  "fields": {
+    "choice": {"kind": "choice", "value": "A", "confidence": 0.99, "ink_ratio": 0.41, "crop": "crops/choice.png"},
+    "otherwise": {"kind": "text", "value": "tylko przy kasie", "raw": "tylko przy kasie", "confidence": 0.82, "crop": "crops/otherwise.png", "strokes": "ink/otherwise.json"},
+    "sketch": {"kind": "sketch", "value": null, "confidence": 1, "crop": "crops/sketch.png"}
+  }
+}

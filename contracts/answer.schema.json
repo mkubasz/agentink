@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://inkhub.local/contracts/answer.schema.json",
+  "title": "Answer",
+  "description": "The hub's view of an answer to one page: recognized, awaiting confirmation, confirmed (then `words` is the owner's text) or rejected (stale page). The `data` of AnswerRecognized, ConfirmationRequested, AnswerConfirmed and AnswerRejected.",
+  "type": "object",
+  "required": ["page_id", "rev", "question_id", "question_rev", "status", "source", "fields"],
+  "additionalProperties": false,
+  "properties": {
+    "page_id": { "$ref": "#/$defs/ulid" },
+    "rev": { "type": "integer", "minimum": 1 },
+    "question_id": { "$ref": "#/$defs/ulid" },
+    "question_rev": { "type": "integer", "minimum": 1 },
+    "status": { "enum": ["recognized", "needs_confirmation", "confirmed", "rejected"] },
+    "reason": { "type": "string", "maxLength": 300, "description": "Why it needs confirmation or was rejected." },
+    "source": {
+      "type": "object", "required": ["device", "artifact", "sha256"], "additionalProperties": false,
+      "properties": {
+        "device": { "type": "string", "minLength": 1 },
+        "artifact": { "type": "string", "minLength": 1, "description": "Path of the uploaded file, relative to the page directory." },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "fields": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["kind", "value", "confidence"],
+        "additionalProperties": false,
+        "properties": {
+          "kind": { "enum": ["choice", "check", "text", "sketch", "stamp"] },
+          "value": { "type": ["string", "boolean", "null"] },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+          "confirmed": { "type": "boolean" },
+          "crop": { "type": "string" }
+        }
+      }
+    },
+    "words": { "type": "string", "maxLength": 4000, "description": "The owner's words as written into the spec; present only when status is confirmed." },
+    "confirmed_at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$" }
+  },
+  "allOf": [
+    { "if": { "properties": { "status": { "const": "confirmed" } } }, "then": { "required": ["words", "confirmed_at"] } }
+  ],
+  "$defs": { "ulid": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" } }
+}

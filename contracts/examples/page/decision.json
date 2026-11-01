@@ -1,0 +1,16 @@
+{
+  "id": "01JBQ4PB2D6G0J3K4M5N6P7Q8R",
+  "rev": 1,
+  "question_id": "01JBQ4P9V7G3ZK8XW2M5N6C7D8",
+  "question_rev": 1,
+  "kind": "decision",
+  "title": "Which printer does the label go to?",
+  "device": {"profile": "supernote-a5x", "width_px": 1404, "height_px": 1872, "format": "pdf"},
+  "fields": [
+    {"id": "choice", "kind": "choice", "label": "Your choice", "options": [{"key": "A", "label": "The thermal printer at the till"}, {"key": "B", "label": "Any system printer"}], "required": true},
+    {"id": "otherwise", "kind": "text", "label": "Otherwise"},
+    {"id": "sketch", "kind": "sketch", "label": "Sketch"}
+  ],
+  "qr": {"payload": "INK:01JBQ4PB2D6G0J3K4M5N6P7Q8R:1"},
+  "rendered_at": "2026-11-01T09:00:01.000Z"
+}

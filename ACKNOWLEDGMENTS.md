@@ -16,6 +16,9 @@ Third-party software, with licences:
 
 - `samber/cc-skills-golang` — the Go style skills and the `.golangci.yml`
   in this repository — MIT, Copyright 2026 Samuel Berthe.
+- `github.com/oklog/ulid/v2` — ULIDs for events, questions and pages — Apache-2.0.
+- `github.com/santhosh-tekuri/jsonschema/v6` — JSON Schema 2020-12 validation in Go — Apache-2.0.
+- `jsonschema` (Python) — the same validation in the worker — MIT.
 - Go modules and Python packages are listed in `go.mod` and
   `worker/pyproject.toml`; each new one is recorded here with its licence
   when it lands.
