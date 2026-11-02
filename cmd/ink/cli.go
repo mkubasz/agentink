@@ -35,6 +35,9 @@ Commands:
   status                  is inkd up, how many projects and questions
   project add <path> [--slug S] [--name N] [--orchestrator herdr|rex|headless|none]
   project list
+  device add <name> --project SLUG [--project SLUG…] [--profile supernote-manta|boox-tab-x-c|…]
+  device revoke <name>
+  device list
   version
 
 Exit codes: 0 ok · 1 error · 2 usage · 3 inkd is not running · 4 no answer yet
@@ -96,6 +99,8 @@ func (c *cli) dispatch(cmd string, args []string) int {
 		return c.exit(c.status())
 	case "project":
 		return c.exit(c.project(args))
+	case "device":
+		return c.exit(c.device(args))
 	case "version":
 		fmt.Fprintln(c.stdout, "ink", Version)
 
@@ -166,7 +171,7 @@ func (c *cli) status() error {
 	}
 
 	return c.print(st, func() string {
-		return fmt.Sprintf("inkd %s · data %s · render %s · %d projects · %d open questions\n", st.Version, st.DataDir, st.Render, st.Projects, st.OpenQuestions)
+		return fmt.Sprintf("inkd %s · data %s · render %s · share %s · %d projects · %d open questions\n", st.Version, st.DataDir, st.Render, st.WebDAV, st.Projects, st.OpenQuestions)
 	})
 }
 

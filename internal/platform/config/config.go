@@ -14,7 +14,11 @@ const (
 	EnvSocket = "AGENTINK_SOCKET"
 	EnvTypst  = "AGENTINK_TYPST"
 	EnvDevice = "AGENTINK_DEVICE"
+	EnvWebDAV = "AGENTINK_WEBDAV"
 )
+
+// WebDAVOff disables the readers' share.
+const WebDAVOff = "off"
 
 // Config is what inkd needs to start and what ink needs to find it.
 type Config struct {
@@ -26,6 +30,15 @@ type Config struct {
 	TypstBin string
 	// Device is the default device profile pages are rendered for (ADR 0006).
 	Device string
+	// WebDAVListen is host:port for the readers' share; an empty host means
+	// the Tailscale interface; "off" disables it (brief §6.3).
+	WebDAVListen string
+	// WebDAVAllowAny lets the share bind outside Tailscale and loopback
+	// (development only; brief §7 forbids it in use).
+	WebDAVAllowAny bool
+	// WebDAVURL is what the owner types into a reader (for `ink device add`);
+	// empty means "derive from the listen address".
+	WebDAVURL string
 }
 
 // Resolve fills Config from explicit values, then the environment, then
@@ -39,6 +52,7 @@ func Resolve(dataDir, socketPath string, getenv func(string) string) (Config, er
 	cfg := Config{
 		DataDir: first(dataDir, getenv(EnvData)), SocketPath: first(socketPath, getenv(EnvSocket)),
 		TypstBin: getenv(EnvTypst), Device: getenv(EnvDevice),
+		WebDAVListen: first(getenv(EnvWebDAV), ":8080"),
 	}
 
 	if cfg.DataDir == "" {

@@ -70,11 +70,35 @@ type Question struct {
 	ConfirmedAt *time.Time      `json:"confirmed_at,omitempty"`
 }
 
+// Device is a reader with WebDAV access to some projects (ADR 0001, ink).
+type Device struct {
+	Name      string     `json:"name"`
+	Profile   string     `json:"profile"`
+	Projects  []string   `json:"projects"`
+	AddedAt   time.Time  `json:"added_at"`
+	RevokedAt *time.Time `json:"revoked_at,omitempty"`
+}
+
+// AddDeviceRequest is POST /v1/devices.
+type AddDeviceRequest struct {
+	Name     string   `json:"name"`
+	Profile  string   `json:"profile,omitempty"`
+	Projects []string `json:"projects"`
+}
+
+// AddDeviceResponse carries the token exactly once.
+type AddDeviceResponse struct {
+	Device Device `json:"device"`
+	Token  string `json:"token"`
+	WebDAV string `json:"webdav,omitempty"`
+}
+
 // Status is GET /v1/status.
 type Status struct {
 	Version       string `json:"version"`
 	DataDir       string `json:"data_dir"`
 	Render        string `json:"render"` // "on", or why rendering is off
+	WebDAV        string `json:"webdav"` // the address the readers use, or why it is off
 	Projects      int    `json:"projects"`
 	OpenQuestions int    `json:"open_questions"`
 }

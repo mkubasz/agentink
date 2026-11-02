@@ -85,6 +85,27 @@ func (c *Client) Question(ctx context.Context, id string) (api.Question, error) 
 	return out, c.call(ctx, http.MethodGet, "/v1/questions/"+url.PathEscape(id), nil, &out)
 }
 
+// AddDevice registers a reader and returns its token once.
+func (c *Client) AddDevice(ctx context.Context, req api.AddDeviceRequest) (api.AddDeviceResponse, error) {
+	var out api.AddDeviceResponse
+
+	return out, c.call(ctx, http.MethodPost, "/v1/devices", req, &out)
+}
+
+// RevokeDevice ends a reader's access.
+func (c *Client) RevokeDevice(ctx context.Context, name string) error {
+	var out struct{}
+
+	return c.call(ctx, http.MethodDelete, "/v1/devices/"+url.PathEscape(name), nil, &out)
+}
+
+// Devices lists the readers.
+func (c *Client) Devices(ctx context.Context) ([]api.Device, error) {
+	var out []api.Device
+
+	return out, c.call(ctx, http.MethodGet, "/v1/devices", nil, &out)
+}
+
 // RegisterProject adds a project.
 func (c *Client) RegisterProject(ctx context.Context, req api.RegisterProjectRequest) (api.Project, error) {
 	var out api.Project
@@ -142,6 +163,10 @@ func (c *Client) call(ctx context.Context, method, path string, in, out any) err
 		}
 
 		return &APIError{Status: resp.StatusCode, Msg: apiErr.Error}
+	}
+
+	if len(bytes.TrimSpace(raw)) == 0 {
+		return nil // 204 No Content
 	}
 
 	if err := json.Unmarshal(raw, out); err != nil {

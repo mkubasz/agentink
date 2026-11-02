@@ -14,6 +14,11 @@ import (
 	inboxdomain "github.com/mkubasz/agentink/internal/inbox/domain"
 	"github.com/mkubasz/agentink/internal/inbox/getquestion"
 	"github.com/mkubasz/agentink/internal/inbox/listinbox"
+	"github.com/mkubasz/agentink/internal/ink/adddevice"
+	inkdomain "github.com/mkubasz/agentink/internal/ink/domain"
+	"github.com/mkubasz/agentink/internal/ink/listdevices"
+	"github.com/mkubasz/agentink/internal/ink/publishpage"
+	"github.com/mkubasz/agentink/internal/ink/revokedevice"
 	pagesdomain "github.com/mkubasz/agentink/internal/pages/domain"
 	"github.com/mkubasz/agentink/internal/pages/renderpage"
 	"github.com/mkubasz/agentink/internal/platform/api"
@@ -21,6 +26,7 @@ import (
 	"github.com/mkubasz/agentink/internal/platform/config"
 	"github.com/mkubasz/agentink/internal/platform/eventlog"
 	"github.com/mkubasz/agentink/internal/platform/httpapi"
+	"github.com/mkubasz/agentink/internal/platform/webdav"
 	projdomain "github.com/mkubasz/agentink/internal/projects/domain"
 	"github.com/mkubasz/agentink/internal/projects/listprojects"
 	"github.com/mkubasz/agentink/internal/projects/registerproject"
@@ -35,9 +41,12 @@ type App struct {
 	registry  *projdomain.Registry
 	inbox     *inboxdomain.Inbox
 	questions *inboxdomain.Questions
+	devices   *inkdomain.Devices
+	share     *webdav.Handler
 	mux       *http.ServeMux
 	logger    *slog.Logger
 	render    string // "on", or why rendering is off
+	webdavURL string // what readers use, or why the share is off
 }
 
 // New opens the store, replays every project's log into the projections and
@@ -51,15 +60,24 @@ func New(cfg config.Config, version string, logger *slog.Logger) (*App, error) {
 	a := &App{
 		cfg: cfg, version: version, store: store,
 		registry: projdomain.NewRegistry(), inbox: inboxdomain.NewInbox(), questions: inboxdomain.NewQuestions(),
-		mux: http.NewServeMux(),
+		devices: inkdomain.NewDevices(),
+		mux:     http.NewServeMux(),
 	}
 	a.bus = bus.New(store, logger)
 	a.logger = logger
 
+	if err := a.wireShare(); err != nil {
+		_ = store.Close()
+
+		return nil, err
+	}
+
 	a.bus.Subscribe("projects.registry", func(_ context.Context, e eventlog.Envelope) error { return a.registry.Apply(e) })
 	a.bus.Subscribe("inbox.projection", func(_ context.Context, e eventlog.Envelope) error { return a.inbox.Apply(e) })
 	a.bus.Subscribe("inbox.questions", func(_ context.Context, e eventlog.Envelope) error { return a.questions.Apply(e) })
+	a.bus.Subscribe("ink.devices", func(_ context.Context, e eventlog.Envelope) error { return a.devices.Apply(e) })
 	a.wireRender()
+	a.bus.React("ink.publishpage", publishpage.New(a.bus, a.share, nil).Handle, publishpage.EventRendered)
 
 	if err := a.replay(); err != nil {
 		_ = store.Close()
@@ -71,6 +89,37 @@ func New(cfg config.Config, version string, logger *slog.Logger) (*App, error) {
 
 	return a, nil
 }
+
+// wireShare builds the readers' WebDAV tree under <data>/dav; the listener
+// itself is the daemon's (see ShareHandler and ShareListen).
+func (a *App) wireShare() error {
+	share, err := webdav.New(filepath.Join(a.cfg.DataDir, "dav"), a.devices, inkdomain.Allowed, nil, webdav.DefaultMaxUpload)
+	if err != nil {
+		return err
+	}
+
+	a.share = share
+
+	switch {
+	case a.cfg.WebDAVListen == config.WebDAVOff:
+		a.webdavURL = "off"
+	case a.cfg.WebDAVURL != "":
+		a.webdavURL = a.cfg.WebDAVURL
+	default:
+		a.webdavURL = "http://" + a.cfg.WebDAVListen + "/Ink/"
+	}
+
+	return nil
+}
+
+// ShareHandler is the readers' WebDAV tree, served by inkd on its own listener.
+func (a *App) ShareHandler() http.Handler { return a.share }
+
+// ShareURL is what the owner types into a reader.
+func (a *App) ShareURL() string { return a.webdavURL }
+
+// SetShareURL records the address the share ended up on (after binding).
+func (a *App) SetShareURL(url string) { a.webdavURL = url }
 
 // wireRender subscribes the renderer when typst and the device profile are
 // available; otherwise the daemon runs with rendering off and says so.
@@ -117,11 +166,14 @@ func (a *App) routes() {
 	a.mux.Handle("POST /v1/questions", askquestion.New(a.bus, a.registry, nil))
 	a.mux.Handle("GET /v1/inbox", listinbox.New(a.inbox))
 	a.mux.Handle("GET /v1/questions/{id}", getquestion.New(a.questions))
+	a.mux.Handle("GET /v1/devices", listdevices.New(a.devices))
+	a.mux.Handle("POST /v1/devices", adddevice.New(a.bus, a.devices, nil, a.ShareURL))
+	a.mux.Handle("DELETE /v1/devices/{name}", revokedevice.New(a.bus, a.devices, nil))
 }
 
 func (a *App) status(w http.ResponseWriter, _ *http.Request) {
 	httpapi.WriteJSON(w, http.StatusOK, api.Status{
-		Version: a.version, DataDir: a.cfg.DataDir, Render: a.render,
+		Version: a.version, DataDir: a.cfg.DataDir, Render: a.render, WebDAV: a.webdavURL,
 		Projects: len(a.registry.List()), OpenQuestions: a.inbox.Open(),
 	})
 }

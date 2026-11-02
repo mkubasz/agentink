@@ -41,14 +41,8 @@ func installStubs(t *testing.T, a *app.App, workerURL string, adapter *fakeAdapt
 	// Phase 2, renderpage: the real slice (internal/pages/renderpage) renders
 	// page.json, zones.json and page.pdf and emits PageRendered.
 
-	// Phase 3, publishpage: the PDF lands in Ink/<project>/ on the WebDAV share.
-	b.Subscribe("stub.publish", func(ctx context.Context, e eventlog.Envelope) error {
-		publish(ctx, next(e, "PagePublished", e.Subject, map[string]any{
-			"page_dir": pageDirOf(e), "path": "Ink/" + e.Project + "/" + e.Subject[5:] + ".pdf",
-		}))
-
-		return nil
-	}, "PageRendered")
+	// Phase 3, publishpage: the real slice copies the PDF onto the share and
+	// emits PagePublished with page_dir, path and sha256.
 
 	// Phase 3, ingestink: the reader uploads the annotated file; here it is a
 	// marker file written straight into the page directory.

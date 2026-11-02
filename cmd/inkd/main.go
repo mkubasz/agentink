@@ -15,6 +15,7 @@ import (
 	"github.com/mkubasz/agentink/internal/app"
 	"github.com/mkubasz/agentink/internal/platform/config"
 	"github.com/mkubasz/agentink/internal/platform/httpapi"
+	"github.com/mkubasz/agentink/internal/platform/webdav"
 )
 
 // Version is stamped by the Makefile's ldflags.
@@ -34,6 +35,9 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	dataDir := fs.String("data", "", "data directory (default $"+config.EnvData+" or $XDG_DATA_HOME/agentink)")
 	socket := fs.String("socket", "", "Unix socket to listen on (default $"+config.EnvSocket+" or $XDG_RUNTIME_DIR/agentink.sock)")
 	verbose := fs.Bool("v", false, "debug logging")
+	davListen := fs.String("webdav-listen", "", "host:port of the readers' share (default $"+config.EnvWebDAV+" or the Tailscale interface, port 8080; off to disable)")
+	davAny := fs.Bool("webdav-allow-any", false, "let the share bind outside Tailscale and loopback (development only)")
+	davURL := fs.String("webdav-url", "", "the address readers type in, when a proxy such as `tailscale serve` fronts the share")
 
 	if err := fs.Parse(args); err != nil {
 		return 2
@@ -53,6 +57,13 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 
+	if *davListen != "" {
+		cfg.WebDAVListen = *davListen
+	}
+
+	cfg.WebDAVAllowAny = *davAny
+	cfg.WebDAVURL = *davURL
+
 	a, err := app.New(cfg, Version, logger)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
@@ -71,11 +82,43 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 
 	fmt.Fprintf(stdout, "inkd %s listening on %s, data in %s\n", Version, cfg.SocketPath, cfg.DataDir)
 
-	if err := httpapi.Serve(ctx, ln, a.Handler()); err != nil {
-		fmt.Fprintln(stderr, err)
+	errc := make(chan error, 2)
 
-		return 1
+	go func() { errc <- httpapi.Serve(ctx, ln, a.Handler()) }()
+
+	go func() { errc <- serveShare(ctx, cfg, a, stdout, logger) }()
+
+	var code int
+
+	for range 2 {
+		if err := <-errc; err != nil {
+			fmt.Fprintln(stderr, err)
+
+			code = 1
+		}
 	}
 
-	return 0
+	return code
+}
+
+// serveShare runs the readers' WebDAV share on its own listener; "off" skips it.
+func serveShare(ctx context.Context, cfg config.Config, a *app.App, stdout io.Writer, logger *slog.Logger) error {
+	if cfg.WebDAVListen == config.WebDAVOff {
+		logger.Info("webdav share off")
+
+		return nil
+	}
+
+	ln, err := webdav.Listen(ctx, cfg.WebDAVListen, cfg.WebDAVAllowAny)
+	if err != nil {
+		return err
+	}
+
+	if cfg.WebDAVURL == "" {
+		a.SetShareURL("http://" + ln.Addr().String() + "/Ink/")
+	}
+
+	fmt.Fprintf(stdout, "readers' share at %s\n", a.ShareURL())
+
+	return httpapi.Serve(ctx, ln, a.ShareHandler())
 }

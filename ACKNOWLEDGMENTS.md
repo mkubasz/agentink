@@ -23,6 +23,7 @@ Third-party software, with licences:
   (`internal/pages/domain/fonts/`) — the handwriting-style face of every page —
   SIL Open Font License 1.1 (`internal/pages/domain/fonts/OFL-Caveat.txt`).
 - `github.com/skip2/go-qrcode` — the QR module matrix on every page — MIT.
+- `golang.org/x/net/webdav` — the readers' WebDAV share — BSD-3-Clause.
 - Go modules and Python packages are listed in `go.mod` and
   `worker/pyproject.toml`; each new one is recorded here with its licence
   when it lands.

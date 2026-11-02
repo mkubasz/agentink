@@ -280,3 +280,59 @@ func TestAgentFromEnv(t *testing.T) {
 		t.Fatalf("an explicit agent must win: %s %v", kept, err)
 	}
 }
+
+// addManta registers the manta reader and checks the one-time token reply.
+func addManta(t *testing.T, socket string) {
+	t.Helper()
+
+	r := ink(socket, nil, "/", "", "--json", "device", "add", "manta", "--project", "shop", "--profile", "supernote-manta")
+	if r.code != exitOK {
+		t.Fatalf("device add: %+v", r)
+	}
+
+	var added struct {
+		Token  string `json:"token"`
+		Device struct {
+			Name     string   `json:"name"`
+			Projects []string `json:"projects"`
+		} `json:"device"`
+	}
+
+	if err := json.Unmarshal([]byte(r.stdout), &added); err != nil || len(added.Token) < 30 || added.Device.Name != "manta" || len(added.Device.Projects) != 1 {
+		t.Fatalf("device add json: %q %v", r.stdout, err)
+	}
+}
+
+func TestInk_DeviceAddListRevoke(t *testing.T) {
+	t.Parallel()
+
+	socket, dataDir := daemon(t)
+	repo := filepath.Join(filepath.Dir(dataDir), "repos", "shop")
+	_ = os.MkdirAll(repo, 0o750)
+
+	if r := ink(socket, nil, repo, "", "project", "add", repo); r.code != exitOK {
+		t.Fatalf("project add: %+v", r)
+	}
+
+	addManta(t, socket)
+
+	if r := ink(socket, nil, "/", "", "device", "add", "manta", "--project", "shop"); r.code != exitError || !strings.Contains(r.stderr, "exists") {
+		t.Fatalf("duplicate: %+v", r)
+	}
+
+	if r := ink(socket, nil, "/", "", "device", "list"); r.code != exitOK || !strings.Contains(r.stdout, "manta") || !strings.Contains(r.stdout, "active") {
+		t.Fatalf("list: %+v", r)
+	}
+
+	if r := ink(socket, nil, "/", "", "device", "revoke", "manta"); r.code != exitOK {
+		t.Fatalf("revoke: %+v", r)
+	}
+
+	if r := ink(socket, nil, "/", "", "device", "list"); !strings.Contains(r.stdout, "revoked") {
+		t.Fatalf("list after revoke: %+v", r)
+	}
+
+	if r := ink(socket, nil, "/", "", "device", "add", "tablet"); r.code != exitError || !strings.Contains(r.stderr, "project") {
+		t.Fatalf("no project: %+v", r)
+	}
+}
