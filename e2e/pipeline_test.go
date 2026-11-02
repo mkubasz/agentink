@@ -198,7 +198,7 @@ func uploadInk(t *testing.T, a *app.App, ink string, env []string, repo, dataDir
 	}
 }
 
-// inkCmd runs our own ink binary, built by make build.
+// inkCmd runs our own ink binary, built by just build.
 func inkCmd(ink string, args ...string) *exec.Cmd {
 	return exec.CommandContext(context.Background(), ink, args...)
 }
@@ -222,7 +222,7 @@ func serve(t *testing.T, a *app.App, socket string) {
 	t.Cleanup(func() { cancel(); <-done; _ = a.Close() })
 }
 
-// binary finds bin/<name> built by `make build`.
+// binary finds bin/<name> built by `just build`.
 func binary(t *testing.T, name string) string {
 	t.Helper()
 
@@ -232,7 +232,7 @@ func binary(t *testing.T, name string) string {
 	}
 
 	if _, err := os.Stat(path); err != nil {
-		t.Fatalf("%s not built: run make build (%v)", name, err)
+		t.Fatalf("%s not built: run just build (%v)", name, err)
 	}
 
 	return path

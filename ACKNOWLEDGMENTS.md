@@ -24,6 +24,7 @@ Third-party software, with licences:
   SIL Open Font License 1.1 (`internal/pages/domain/fonts/OFL-Caveat.txt`).
 - `github.com/skip2/go-qrcode` — the QR module matrix on every page — MIT.
 - `golang.org/x/net/webdav` — the readers' WebDAV share — BSD-3-Clause.
+- `just` (casey/just) — the task runner, a developer tool only (ADR 0009) — CC0-1.0.
 - Go modules and Python packages are listed in `go.mod` and
   `worker/pyproject.toml`; each new one is recorded here with its licence
   when it lands.

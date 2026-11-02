@@ -25,7 +25,7 @@ types from the schemas or to write them by hand.
   because it *is* the contract; a test validates every example and every
   Go type's marshalled output. Python: the worker validates its inputs and
   its `ocr.json` with the `jsonschema` package against the same files; a test
-  runs the same examples. `make contracts` runs both test sets.
+  runs the same examples. `just contracts` runs both test sets.
 - Why not generate: at six small schemas, generators (Go: `go-jsonschema`;
   Python: `datamodel-code-generator`) add a build step, a style the linters
   fight, and types that still need hand-written methods. The tests catch the
@@ -44,4 +44,4 @@ types from the schemas or to write them by hand.
 
 - Two new dependencies, recorded in `ACKNOWLEDGMENTS.md`.
 - A schema change is one commit touching the schema, its examples, and the
-  types on the side(s) it affects; `make contracts` fails until all agree.
+  types on the side(s) it affects; `just contracts` fails until all agree.

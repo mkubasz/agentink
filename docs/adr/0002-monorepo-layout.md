@@ -17,7 +17,7 @@ path equal to the repository URL.
 ## Decision
 
 ```
-go.mod  go.sum  Makefile  .golangci.yml  .gitignore  README.md  CLAUDE.md  LICENSE
+go.mod  go.sum  justfile  .golangci.yml  .gitignore  README.md  CLAUDE.md  LICENSE
 cmd/inkd/              # the hub daemon: flags, wiring, Run()
 cmd/ink/               # the CLI for agents and the owner
 internal/platform/     # eventlog, bus, lock, config, webdav, auth, mdfile, cli
@@ -34,8 +34,8 @@ docs/adr/  docs/architecture/  docs/specs/
 ```
 
 - **One Go module at the root**, one Python project under `worker/`. No
-  `go.work`: there is one module. The Makefile is the one entry point for
-  both (`make test` runs `go test` and `uv run pytest`).
+  `go.work`: there is one module. The justfile is the one entry point for
+  both (`just test` runs `go test` and `uv run pytest`; ADR 0009).
 - **No `pkg/`** until a consumer outside the module exists. The one
   importable package is `contracts/` (the schemas and their validator, ADR
   0008), which sits at the root because `go:embed` cannot reach a parent
@@ -70,8 +70,8 @@ docs/adr/  docs/architecture/  docs/specs/
 
 ## Consequences
 
-- `make build` builds `inkd` and `ink`; `make worker` syncs the Python
-  environment; `make contracts` runs the Go and Python contract tests over
+- `just build` builds `inkd` and `ink`; `just worker` syncs the Python
+  environment; `just contracts` runs the Go and Python contract tests over
   the shared examples (ADR 0008).
 - The repository root is AgentInk's shape from the first commit; nothing from
   dark-factory is in it (ADR 0003).

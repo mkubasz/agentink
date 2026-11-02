@@ -14,6 +14,7 @@ Files are `NNNN-<slug>.md`, written in English, and never rewritten once
 | [0006](0006-page-rendering-with-typst.md) | Page rendering with Typst, answer zones from the template | proposed |
 | [0007](0007-worker-as-a-local-service.md) | The Python worker is a local service that `inkd` supervises | proposed |
 | [0008](0008-contracts-validated-not-generated.md) | Contracts: JSON Schema as the source of truth, validated on both sides | proposed |
+| [0009](0009-just-as-the-task-runner.md) | `just` is the task runner | accepted |
 
 ## Template
 

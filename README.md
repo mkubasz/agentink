@@ -17,7 +17,7 @@ Licence: all rights reserved (see `LICENSE`).
 ## Running it
 
 ```bash
-make build
+just build
 bin/inkd --webdav-listen :8080 --watch boox=/srv/sync/boox
 ```
 

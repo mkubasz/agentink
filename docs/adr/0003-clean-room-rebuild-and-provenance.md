@@ -50,7 +50,7 @@ the ideas.
   (`LICENSE`, chosen 2026-11-01: "Moja licencja"); an open licence can replace
   the file at any time.
 - **Nothing is migrated**, so there is no legacy tier, no baseline allowlist
-  and no park/drop ledger: `make test` and `make lint` are the whole gate.
+  and no park/drop ledger: `just test` and `just lint` are the whole gate.
 
 ## Alternatives
 

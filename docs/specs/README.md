@@ -31,13 +31,13 @@ records how dark-factory's differed, as a lesson only (ADR 0003).
   machine with `/plugin marketplace add samber/cc` then
   `/plugin install cc-skills-golang@samber`; the repository lists them in its
   `CLAUDE.md` once Phase 1 starts.
-- **Verification:** `make test` (Go packages and `worker/`), `make lint`
-  (golangci-lint, `ruff` + `mypy`), `make provenance` (no upstream name in the
-  tree), `make e2e` (the whole loop with fakes). One Go test: `go test
+- **Verification:** `just test` (Go packages and `worker/`), `just lint`
+  (golangci-lint, `ruff` + `mypy`), `just provenance` (no upstream name in the
+  tree), `just e2e` (the whole loop with fakes). One Go test: `go test
   ./internal/<ctx>/<slice>/ -run '^TestName$' -count=1`. One worker test:
   `uv run --project worker pytest worker/tests -k <name>`.
-- **Gate places:** *local* (`make test`, `make lint`, `make provenance`,
-  `make e2e`: the fake agent → WebDAV → stub worker → spec → fake herdr round
+- **Gate places:** *local* (`just test`, `just lint`, `just provenance`,
+  `just e2e`: the fake agent → WebDAV → stub worker → spec → fake herdr round
   trip, no devices);
   *devices* (a real Boox and a real Supernote on the owner's Tailscale —
   the owner starts these, Phase 3 latency and Phase 4 OCR samples); *paid*
@@ -46,10 +46,10 @@ records how dark-factory's differed, as a lesson only (ADR 0003).
 - **Commit:** Conventional Commits (`feat(inbox): …`, `docs(adr): …`,
   `test(platform): …`), one slice per commit series. No hooks are installed
   yet; `git log` is the audit log.
-- **CI:** none yet; a GitHub Actions workflow running `make test lint
+- **CI:** none yet; a GitHub Actions workflow running `just test lint
   provenance` is a Phase 1 deliverable once the repository exists. No branch
   deploys.
-- **Contract regeneration:** `make contracts` (Phase 1) regenerates Go types
+- **Contract regeneration:** `just contracts` (Phase 1) regenerates Go types
   from `contracts/*.schema.json` and checks the worker's models against the
   same files; a changed schema is committed with its regenerated output.
 - **Vault:** `Manager` (the default). In a cloud session without Obsidian the

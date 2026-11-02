@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-// Version is stamped by the Makefile's ldflags.
+// Version is stamped by the justfile's ldflags.
 var Version = "dev"
 
 func main() {
