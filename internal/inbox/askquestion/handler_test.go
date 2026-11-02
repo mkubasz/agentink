@@ -91,6 +91,26 @@ func TestAskQuestion_RejectsInvalidQuestion(t *testing.T) {
 	}
 }
 
+func TestAskQuestion_RejectsSpecPathOutsideProject(t *testing.T) {
+	t.Parallel()
+
+	f := setup(t)
+
+	for _, bad := range []string{"/etc/passwd", "../other/docs/specs/X.md", "docs/../../X.md", `docs\\specs\\X.md`, "C:/specs/X.md", ".", ".."} {
+		q := `{"kind":"decision","title":"Which printer?","spec":{"path":"` + bad + `"},"options":[{"key":"A","label":"thermal","recommended":true},{"key":"B","label":"laser"}]}`
+
+		_, err := f.handler.Handle(context.Background(), api.AskRequest{Project: "shop", Question: json.RawMessage(q)})
+		if !errors.Is(err, askquestion.ErrSpecPath) {
+			t.Errorf("spec.path %q: err = %v, want ErrSpecPath", bad, err)
+		}
+	}
+
+	ok := `{"kind":"decision","title":"Which printer?","spec":{"path":"docs/specs/SHP-12.md","anchor":"Q1"},"options":[{"key":"A","label":"thermal","recommended":true},{"key":"B","label":"laser"}]}`
+	if _, err := f.handler.Handle(context.Background(), api.AskRequest{Project: "shop", Question: json.RawMessage(ok)}); err != nil {
+		t.Fatalf("relative spec path refused: %v", err)
+	}
+}
+
 func TestAskQuestion_NeedsAProject(t *testing.T) {
 	t.Parallel()
 

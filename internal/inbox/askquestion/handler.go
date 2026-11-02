@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/mkubasz/agentink/contracts"
@@ -18,6 +20,10 @@ import (
 // ErrNoProject is returned when neither the slug nor the working directory
 // names a registered project.
 var ErrNoProject = errors.New("askquestion: no project: pass --project or run inside a registered repository")
+
+// ErrSpecPath is returned when the question names a spec file the answer
+// writer must never touch: outside the project, or not a plain relative path.
+var ErrSpecPath = errors.New("askquestion: spec.path must be a relative path inside the project")
 
 // Publisher is the bus the slice emits to.
 type Publisher interface {
@@ -49,6 +55,10 @@ func New(bus Publisher, projects Projects, now func() time.Time) *Handler {
 // Handle validates, resolves the project and emits QuestionAsked.
 func (h *Handler) Handle(ctx context.Context, req api.AskRequest) (api.AskResponse, error) {
 	if err := contracts.Validate(contracts.Question, req.Question); err != nil {
+		return api.AskResponse{}, err
+	}
+
+	if err := checkSpecPath(req.Question); err != nil {
 		return api.AskResponse{}, err
 	}
 
@@ -98,4 +108,30 @@ func (h *Handler) resolve(req api.AskRequest) (api.Project, error) {
 	}
 
 	return api.Project{}, ErrNoProject
+}
+
+// checkSpecPath keeps the answer writer inside the project (threat model §3):
+// the path is relative, slash-separated, and never climbs out.
+func checkSpecPath(question json.RawMessage) error {
+	var q struct {
+		Spec *struct {
+			Path string `json:"path"`
+		} `json:"spec"`
+	}
+
+	if err := json.Unmarshal(question, &q); err != nil || q.Spec == nil {
+		return nil //nolint:nilerr // the contract was validated already; a question without a spec is fine
+	}
+
+	p := q.Spec.Path
+	if strings.HasPrefix(p, "/") || strings.Contains(p, "\\") || strings.Contains(p, ":") {
+		return ErrSpecPath
+	}
+
+	clean := path.Clean(p)
+	if clean == "." || clean == ".." || strings.HasPrefix(clean, "../") {
+		return ErrSpecPath
+	}
+
+	return nil
 }

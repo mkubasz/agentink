@@ -23,7 +23,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case err == nil:
 		httpapi.WriteJSON(w, http.StatusCreated, res)
-	case errors.Is(err, contracts.ErrInvalid):
+	case errors.Is(err, contracts.ErrInvalid), errors.Is(err, ErrSpecPath):
 		httpapi.WriteError(w, http.StatusBadRequest, err)
 	case errors.Is(err, ErrNoProject):
 		httpapi.WriteError(w, http.StatusNotFound, err)
