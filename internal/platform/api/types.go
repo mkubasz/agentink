@@ -74,6 +74,7 @@ type Question struct {
 type Status struct {
 	Version       string `json:"version"`
 	DataDir       string `json:"data_dir"`
+	Render        string `json:"render"` // "on", or why rendering is off
 	Projects      int    `json:"projects"`
 	OpenQuestions int    `json:"open_questions"`
 }

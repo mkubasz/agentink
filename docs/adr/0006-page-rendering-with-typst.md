@@ -50,10 +50,29 @@ linux-musl binary (release 2026-07-17; 0.15.0 is from 2026-06-15):
 - **Golden tests.** Each page type has a golden `zones.json` and a golden PDF
   rasterized to PNG at a fixed DPI, compared with a tolerance; the test is
   skipped with a clear message when `typst` is absent, and CI installs it.
-- **Fonts.** Chosen in Phase 2: a handwriting-style font with the full Polish
-  set (ą ć ę ł ń ó ś ź ż and capitals) under an open licence, shipped in
-  `internal/pages/fonts/` and passed with `--font-path`. Stroke synthesis is
-  v2.
+- **Fonts (Phase 2, 2026-11-02).** Caveat (SIL OFL 1.1, variable weight
+  400–700) is the handwriting-style face: checked with fontTools, it carries
+  every Polish letter (ą ć ę ł ń ó ś ź ż and capitals). It is embedded in the
+  Go binary from `internal/pages/domain/fonts/`, written to the data directory at
+  start and passed with `--font-path`; `--ignore-system-fonts` keeps renders
+  identical across machines. Identifiers use Typst's embedded DejaVu Sans
+  Mono. Stroke synthesis is v2.
+- **QR code.** Drawn by the template from a module matrix that `inkd`
+  computes with `github.com/skip2/go-qrcode` (MIT) and passes in
+  `sys.inputs`; no Typst package download, no image file, so a render is
+  deterministic and works offline. The payload is `INK:<page-ulid>:<rev>`
+  (ADR 0005), error correction level M.
+- **Page size.** A page is the device's screen: width and height in pixels
+  at the device's ppi, converted to millimetres, so the PDF maps 1:1 to the
+  e-ink display and zone coordinates need no scaling. Device profiles
+  (`internal/pages/domain`): `supernote-a5x` 1404×1872 @226 ppi,
+  `supernote-a6x` and `supernote-nomad` 1404×1872 @300, `supernote-manta`
+  1920×2560 @300, `boox-note-air` 1404×1872 @227; the default is
+  `supernote-a5x` (`render.device`).
+- **Inputs.** The page document (`contracts/page.schema.json`) plus the QR
+  matrix go to the template as `--input page=<json>`; the template never
+  concatenates strings into Typst source, so handwriting and agent text stay
+  data (brief §7).
 
 ## Alternatives
 
@@ -69,6 +88,8 @@ linux-musl binary (release 2026-07-17; 0.15.0 is from 2026-06-15):
 - `typst` is an external runtime dependency; the install docs and the CI
   image pin 0.15.x. Upgrading Typst is an ADR amendment with the golden
   tests as the proof.
+- Two additions to the tree: the Caveat font files (~400 KB, OFL) and the
+  `go-qrcode` module (MIT), both recorded in `ACKNOWLEDGMENTS.md`.
 - The deprecation of `typst query` costs nothing today: the `eval` form is
   the primary path.
 - `here().position()` is a layout-time value: a zone inside a floating or

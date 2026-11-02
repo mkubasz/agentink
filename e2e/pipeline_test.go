@@ -34,6 +34,10 @@ func TestE2E_AskToDelivery(t *testing.T) {
 
 	copyFile(t, filepath.Join("testdata", "SHP-12-labels.md"), specPath)
 
+	if _, err := exec.LookPath("typst"); err != nil {
+		t.Skip("typst not on PATH: the real renderer is part of the loop (ADR 0006)")
+	}
+
 	a, err := app.New(config.Config{DataDir: dataDir, SocketPath: socket}, "e2e", slog.New(slog.DiscardHandler))
 	if err != nil {
 		t.Fatal(err)

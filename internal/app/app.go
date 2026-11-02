@@ -8,11 +8,14 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"path/filepath"
 
 	"github.com/mkubasz/agentink/internal/inbox/askquestion"
 	inboxdomain "github.com/mkubasz/agentink/internal/inbox/domain"
 	"github.com/mkubasz/agentink/internal/inbox/getquestion"
 	"github.com/mkubasz/agentink/internal/inbox/listinbox"
+	pagesdomain "github.com/mkubasz/agentink/internal/pages/domain"
+	"github.com/mkubasz/agentink/internal/pages/renderpage"
 	"github.com/mkubasz/agentink/internal/platform/api"
 	"github.com/mkubasz/agentink/internal/platform/bus"
 	"github.com/mkubasz/agentink/internal/platform/config"
@@ -33,6 +36,8 @@ type App struct {
 	inbox     *inboxdomain.Inbox
 	questions *inboxdomain.Questions
 	mux       *http.ServeMux
+	logger    *slog.Logger
+	render    string // "on", or why rendering is off
 }
 
 // New opens the store, replays every project's log into the projections and
@@ -49,10 +54,12 @@ func New(cfg config.Config, version string, logger *slog.Logger) (*App, error) {
 		mux: http.NewServeMux(),
 	}
 	a.bus = bus.New(store, logger)
+	a.logger = logger
 
 	a.bus.Subscribe("projects.registry", func(_ context.Context, e eventlog.Envelope) error { return a.registry.Apply(e) })
 	a.bus.Subscribe("inbox.projection", func(_ context.Context, e eventlog.Envelope) error { return a.inbox.Apply(e) })
 	a.bus.Subscribe("inbox.questions", func(_ context.Context, e eventlog.Envelope) error { return a.questions.Apply(e) })
+	a.wireRender()
 
 	if err := a.replay(); err != nil {
 		_ = store.Close()
@@ -63,6 +70,30 @@ func New(cfg config.Config, version string, logger *slog.Logger) (*App, error) {
 	a.routes()
 
 	return a, nil
+}
+
+// wireRender subscribes the renderer when typst and the device profile are
+// available; otherwise the daemon runs with rendering off and says so.
+func (a *App) wireRender() {
+	device, err := pagesdomain.Lookup(a.cfg.Device)
+	if err != nil {
+		a.render = err.Error()
+		a.logger.Warn("rendering off", "reason", a.render)
+
+		return
+	}
+
+	typst, err := renderpage.NewTypst(context.Background(), a.cfg.TypstBin, filepath.Join(a.cfg.DataDir, "render"))
+	if err != nil {
+		a.render = err.Error()
+		a.logger.Warn("rendering off", "reason", a.render)
+
+		return
+	}
+
+	h := renderpage.New(a.bus, typst, a.cfg.DataDir, device, nil)
+	a.bus.React("pages.renderpage", h.Handle, renderpage.EventAsked)
+	a.render = "on"
 }
 
 func (a *App) replay() error {
@@ -90,7 +121,7 @@ func (a *App) routes() {
 
 func (a *App) status(w http.ResponseWriter, _ *http.Request) {
 	httpapi.WriteJSON(w, http.StatusOK, api.Status{
-		Version: a.version, DataDir: a.cfg.DataDir,
+		Version: a.version, DataDir: a.cfg.DataDir, Render: a.render,
 		Projects: len(a.registry.List()), OpenQuestions: a.inbox.Open(),
 	})
 }

@@ -1,0 +1,97 @@
+{
+  "page_id": "01JBQ4PB2D6G0J3K4M5N6P7Q8R",
+  "page_size_mm": {
+    "h": 210.39,
+    "w": 157.79
+  },
+  "rev": 1,
+  "zones": [
+    {
+      "h": 6,
+      "kind": "fiducial",
+      "page": 1,
+      "w": 6,
+      "x": 5,
+      "y": 5,
+      "zone": "mark-tl"
+    },
+    {
+      "h": 6,
+      "kind": "fiducial",
+      "page": 1,
+      "w": 6,
+      "x": 146.79,
+      "y": 5,
+      "zone": "mark-tr"
+    },
+    {
+      "h": 6,
+      "kind": "fiducial",
+      "page": 1,
+      "w": 6,
+      "x": 5,
+      "y": 199.39,
+      "zone": "mark-bl"
+    },
+    {
+      "h": 6,
+      "kind": "fiducial",
+      "page": 1,
+      "w": 6,
+      "x": 146.79,
+      "y": 199.39,
+      "zone": "mark-br"
+    },
+    {
+      "h": 22,
+      "kind": "qr",
+      "page": 1,
+      "w": 22,
+      "x": 121.79,
+      "y": 14,
+      "zone": "qr"
+    },
+    {
+      "field": "choice",
+      "h": 8,
+      "kind": "option",
+      "option": "A",
+      "page": 1,
+      "w": 8,
+      "x": 14.5,
+      "y": 66.19,
+      "zone": "choice-A"
+    },
+    {
+      "field": "choice",
+      "h": 8,
+      "kind": "option",
+      "option": "B",
+      "page": 1,
+      "w": 8,
+      "x": 14.5,
+      "y": 82.2,
+      "zone": "choice-B"
+    },
+    {
+      "field": "otherwise",
+      "h": 28,
+      "kind": "field",
+      "page": 1,
+      "w": 129.79,
+      "x": 14,
+      "y": 109.08,
+      "zone": "otherwise"
+    },
+    {
+      "field": "sketch",
+      "h": 40.39,
+      "kind": "field",
+      "page": 1,
+      "w": 129.79,
+      "x": 14,
+      "y": 155.46,
+      "zone": "sketch"
+    }
+  ]
+}

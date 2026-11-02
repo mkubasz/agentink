@@ -12,7 +12,7 @@
       "enum": [
         "ProjectRegistered", "DeviceAdded", "DeviceRevoked",
         "QuestionAsked", "QuestionWithdrawn",
-        "PageRendered", "PagePublished",
+        "PageRendered", "RenderFailed", "PagePublished",
         "InkReceived", "IngestRejected",
         "AnswerRecognized", "RecognitionFailed", "ConfirmationRequested",
         "AnswerConfirmed", "AnswerRejected",

@@ -23,7 +23,7 @@ cmd/ink/               # the CLI for agents and the owner
 internal/platform/     # eventlog, bus, lock, config, webdav, auth, mdfile, cli
 internal/projects/     # each context: domain/ + one folder per slice
 internal/inbox/
-internal/pages/        # incl. pages/templates/*.typ (go:embed) and pages/fonts/
+internal/pages/        # incl. pages/domain/templates/*.typ (go:embed) and pages/domain/fonts/
 internal/ink/
 internal/agents/
 internal/specflow/
@@ -40,7 +40,7 @@ docs/adr/  docs/architecture/  docs/specs/
   importable package is `contracts/` (the schemas and their validator, ADR
   0008), which sits at the root because `go:embed` cannot reach a parent
   directory and because it is the contract other tools may import.
-- **Typst templates are embedded** in `internal/pages/templates/` with
+- **Typst templates are embedded** in `internal/pages/domain/templates/` with
   `//go:embed`; golden PDFs and zone files in
   `internal/pages/renderpage/testdata/`.
 - **The worker** has its own `pyproject.toml` (`uv`), `inkworker/` as the

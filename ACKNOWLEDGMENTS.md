@@ -19,6 +19,10 @@ Third-party software, with licences:
 - `github.com/oklog/ulid/v2` — ULIDs for events, questions and pages — Apache-2.0.
 - `github.com/santhosh-tekuri/jsonschema/v6` — JSON Schema 2020-12 validation in Go — Apache-2.0.
 - `jsonschema` (Python) — the same validation in the worker — MIT.
+- Caveat, by Pablo Impallari and the Caveat Project Authors
+  (`internal/pages/domain/fonts/`) — the handwriting-style face of every page —
+  SIL Open Font License 1.1 (`internal/pages/domain/fonts/OFL-Caveat.txt`).
+- `github.com/skip2/go-qrcode` — the QR module matrix on every page — MIT.
 - Go modules and Python packages are listed in `go.mod` and
   `worker/pyproject.toml`; each new one is recorded here with its licence
   when it lands.

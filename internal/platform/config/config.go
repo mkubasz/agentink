@@ -12,6 +12,8 @@ import (
 const (
 	EnvData   = "AGENTINK_DATA"
 	EnvSocket = "AGENTINK_SOCKET"
+	EnvTypst  = "AGENTINK_TYPST"
+	EnvDevice = "AGENTINK_DEVICE"
 )
 
 // Config is what inkd needs to start and what ink needs to find it.
@@ -20,6 +22,10 @@ type Config struct {
 	DataDir string
 	// SocketPath is the Unix socket inkd listens on and ink talks to.
 	SocketPath string
+	// TypstBin is the typst binary (default: `typst` on PATH); empty means "look it up".
+	TypstBin string
+	// Device is the default device profile pages are rendered for (ADR 0006).
+	Device string
 }
 
 // Resolve fills Config from explicit values, then the environment, then
@@ -30,7 +36,10 @@ func Resolve(dataDir, socketPath string, getenv func(string) string) (Config, er
 		return Config{}, fmt.Errorf("config: home directory: %w", err)
 	}
 
-	cfg := Config{DataDir: first(dataDir, getenv(EnvData)), SocketPath: first(socketPath, getenv(EnvSocket))}
+	cfg := Config{
+		DataDir: first(dataDir, getenv(EnvData)), SocketPath: first(socketPath, getenv(EnvSocket)),
+		TypstBin: getenv(EnvTypst), Device: getenv(EnvDevice),
+	}
 
 	if cfg.DataDir == "" {
 		cfg.DataDir = filepath.Join(first(getenv("XDG_DATA_HOME"), filepath.Join(home, ".local", "share")), "agentink")

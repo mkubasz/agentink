@@ -37,7 +37,13 @@
           "options": {
             "type": "array",
             "items": { "type": "object", "required": ["key", "label"], "additionalProperties": false,
-              "properties": { "key": { "type": "string", "pattern": "^[A-D]$|^(yes|no|ok|fail|try|skip|stop)$" }, "label": { "type": "string" } } }
+              "properties": {
+                "key": { "type": "string", "pattern": "^[A-D]$|^(yes|no|ok|fail|try|skip|stop)$" },
+                "label": { "type": "string" },
+                "recommended": { "type": "boolean" },
+                "why": { "type": "string", "maxLength": 2000 },
+                "cost": { "type": "string", "maxLength": 500 }
+              } }
           },
           "required": { "type": "boolean" }
         }

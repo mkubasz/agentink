@@ -38,25 +38,8 @@ func installStubs(t *testing.T, a *app.App, workerURL string, adapter *fakeAdapt
 		}
 	}
 
-	// Phase 2, renderpage: a page directory with page.json and zones.json.
-	b.Subscribe("stub.render", func(ctx context.Context, e eventlog.Envelope) error {
-		var d struct {
-			Question json.RawMessage `json:"question"`
-		}
-
-		_ = json.Unmarshal(e.Data, &d)
-
-		pageID := eventlog.NewID(e.At)
-		pageDir := filepath.Join(a.DataDir(), "projects", e.Project, "pages", pageID)
-		writeJSON(t, filepath.Join(pageDir, "page.json"), contracts.Page, pageDoc(pageID, questionID(e.Subject), d.Question, e.At))
-		writeJSON(t, filepath.Join(pageDir, "zones.json"), contracts.Zones, zonesDoc(pageID))
-
-		publish(ctx, next(e, "PageRendered", "page/"+pageID, map[string]any{
-			"question_id": questionID(e.Subject), "question_rev": 1, "page_dir": pageDir, "pdf": "page.pdf", "zones": "zones.json",
-		}))
-
-		return nil
-	}, "QuestionAsked")
+	// Phase 2, renderpage: the real slice (internal/pages/renderpage) renders
+	// page.json, zones.json and page.pdf and emits PageRendered.
 
 	// Phase 3, publishpage: the PDF lands in Ink/<project>/ on the WebDAV share.
 	b.Subscribe("stub.publish", func(ctx context.Context, e eventlog.Envelope) error {
@@ -247,45 +230,6 @@ func specPathOf(t *testing.T, a *app.App, e eventlog.Envelope) string {
 	return filepath.Join(projectPath, questionRel)
 }
 
-func pageDoc(pageID, questionID string, question json.RawMessage, at time.Time) map[string]any {
-	var q struct {
-		Kind    string           `json:"kind"`
-		Title   string           `json:"title"`
-		Options []map[string]any `json:"options"`
-	}
-
-	_ = json.Unmarshal(question, &q)
-
-	options := make([]map[string]any, 0, len(q.Options))
-	for _, o := range q.Options {
-		options = append(options, map[string]any{"key": o["key"], "label": o["label"]})
-	}
-
-	return map[string]any{
-		"id": pageID, "rev": 1, "question_id": questionID, "question_rev": 1, "kind": q.Kind, "title": q.Title,
-		"device": map[string]any{"profile": "supernote-a5x", "width_px": 1404, "height_px": 1872, "format": "pdf"},
-		"fields": []map[string]any{
-			{"id": "choice", "kind": "choice", "label": "Your choice", "options": options, "required": true},
-			{"id": "otherwise", "kind": "text", "label": "Otherwise"},
-			{"id": "sketch", "kind": "sketch", "label": "Sketch"},
-		},
-		"qr":          map[string]any{"payload": "INK:" + pageID + ":1"},
-		"rendered_at": at.UTC().Format("2006-01-02T15:04:05.000Z"),
-	}
-}
-
-func zonesDoc(pageID string) map[string]any {
-	return map[string]any{
-		"page_id": pageID, "rev": 1, "page_size_mm": map[string]any{"w": 148, "h": 210},
-		"zones": []map[string]any{
-			{"zone": "qr", "kind": "qr", "page": 1, "x": 118, "y": 10, "w": 20, "h": 20},
-			{"zone": "choice-A", "kind": "option", "field": "choice", "option": "A", "page": 1, "x": 12, "y": 60, "w": 8, "h": 8},
-			{"zone": "choice-B", "kind": "option", "field": "choice", "option": "B", "page": 1, "x": 12, "y": 72, "w": 8, "h": 8},
-			{"zone": "otherwise", "kind": "field", "field": "otherwise", "page": 1, "x": 12, "y": 90, "w": 124, "h": 30},
-		},
-	}
-}
-
 func answerDoc(pageID string, in struct {
 	PageDir string `json:"page_dir"`
 	Device  string `json:"device"`
@@ -422,27 +366,6 @@ func (f *fakeAdapter) lastPrompt() string {
 	}
 
 	return f.prompts[len(f.prompts)-1]
-}
-
-func writeJSON(t *testing.T, path, contract string, v any) {
-	t.Helper()
-
-	raw, err := json.Marshal(v)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := contracts.Validate(contract, raw); err != nil {
-		t.Fatalf("%s breaks %s: %v", path, contract, err)
-	}
-
-	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := os.WriteFile(path, raw, 0o600); err != nil {
-		t.Fatal(err)
-	}
 }
 
 func readJSON(path string) map[string]any {

@@ -166,7 +166,7 @@ func (c *cli) status() error {
 	}
 
 	return c.print(st, func() string {
-		return fmt.Sprintf("inkd %s · data %s · %d projects · %d open questions\n", st.Version, st.DataDir, st.Projects, st.OpenQuestions)
+		return fmt.Sprintf("inkd %s · data %s · render %s · %d projects · %d open questions\n", st.Version, st.DataDir, st.Render, st.Projects, st.OpenQuestions)
 	})
 }
 

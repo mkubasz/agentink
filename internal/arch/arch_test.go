@@ -63,14 +63,21 @@ func allowed(pkgDir, imp string) bool {
 		return target == "contracts" || strings.HasPrefix(target, "internal/platform/")
 	}
 
-	// A context package: internal/<ctx>/<domain|slice>.
+	// A context package: internal/<ctx>/<domain|slice>. The domain and its
+	// sub-packages (assets such as templates and fonts) are shared inside the
+	// context; slices never import each other.
 	ctx := parts[1]
+	domain := "internal/" + ctx + "/domain"
 
 	if target == "contracts" || strings.HasPrefix(target, "internal/platform/") {
 		return true
 	}
 
-	return target == "internal/"+ctx+"/domain" && len(parts) >= 3 && parts[2] != "domain"
+	if target == domain || strings.HasPrefix(target, domain+"/") {
+		return len(parts) < 3 || parts[2] != "domain" || target != domain
+	}
+
+	return false
 }
 
 func imports(t *testing.T, path string) []string {
