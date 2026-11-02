@@ -11,6 +11,7 @@ import (
 
 	"github.com/mkubasz/agentink/internal/inbox/askquestion"
 	inboxdomain "github.com/mkubasz/agentink/internal/inbox/domain"
+	"github.com/mkubasz/agentink/internal/inbox/getquestion"
 	"github.com/mkubasz/agentink/internal/inbox/listinbox"
 	"github.com/mkubasz/agentink/internal/platform/api"
 	"github.com/mkubasz/agentink/internal/platform/bus"
@@ -24,13 +25,14 @@ import (
 
 // App is a running hub without its listener.
 type App struct {
-	cfg      config.Config
-	version  string
-	store    *eventlog.Store
-	bus      *bus.Bus
-	registry *projdomain.Registry
-	inbox    *inboxdomain.Inbox
-	mux      *http.ServeMux
+	cfg       config.Config
+	version   string
+	store     *eventlog.Store
+	bus       *bus.Bus
+	registry  *projdomain.Registry
+	inbox     *inboxdomain.Inbox
+	questions *inboxdomain.Questions
+	mux       *http.ServeMux
 }
 
 // New opens the store, replays every project's log into the projections and
@@ -43,13 +45,14 @@ func New(cfg config.Config, version string, logger *slog.Logger) (*App, error) {
 
 	a := &App{
 		cfg: cfg, version: version, store: store,
-		registry: projdomain.NewRegistry(), inbox: inboxdomain.NewInbox(),
+		registry: projdomain.NewRegistry(), inbox: inboxdomain.NewInbox(), questions: inboxdomain.NewQuestions(),
 		mux: http.NewServeMux(),
 	}
 	a.bus = bus.New(store, logger)
 
 	a.bus.Subscribe("projects.registry", func(_ context.Context, e eventlog.Envelope) error { return a.registry.Apply(e) })
 	a.bus.Subscribe("inbox.projection", func(_ context.Context, e eventlog.Envelope) error { return a.inbox.Apply(e) })
+	a.bus.Subscribe("inbox.questions", func(_ context.Context, e eventlog.Envelope) error { return a.questions.Apply(e) })
 
 	if err := a.replay(); err != nil {
 		_ = store.Close()
@@ -82,6 +85,7 @@ func (a *App) routes() {
 	a.mux.Handle("POST /v1/projects", registerproject.New(a.bus, a.registry, nil))
 	a.mux.Handle("POST /v1/questions", askquestion.New(a.bus, a.registry, nil))
 	a.mux.Handle("GET /v1/inbox", listinbox.New(a.inbox))
+	a.mux.Handle("GET /v1/questions/{id}", getquestion.New(a.questions))
 }
 
 func (a *App) status(w http.ResponseWriter, _ *http.Request) {

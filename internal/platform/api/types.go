@@ -54,6 +54,22 @@ type InboxRow struct {
 	AskedAt    time.Time `json:"asked_at"`
 }
 
+// Question is GET /v1/questions/{id}: where one question stands and, once
+// the owner confirmed it, the answer (contracts/answer.schema.json) and the
+// owner's words. Answer is empty while Status is before "confirmed".
+type Question struct {
+	QuestionID  string          `json:"question_id"`
+	Project     string          `json:"project"`
+	Kind        string          `json:"kind"`
+	Title       string          `json:"title"`
+	Critical    bool            `json:"critical"`
+	Status      string          `json:"status"`
+	AskedAt     time.Time       `json:"asked_at"`
+	Answer      json.RawMessage `json:"answer,omitempty"`
+	Words       string          `json:"words,omitempty"`
+	ConfirmedAt *time.Time      `json:"confirmed_at,omitempty"`
+}
+
 // Status is GET /v1/status.
 type Status struct {
 	Version       string `json:"version"`

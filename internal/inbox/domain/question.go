@@ -17,24 +17,28 @@ import (
 
 // Event types the inbox folds.
 const (
-	EventAsked     = "QuestionAsked"
-	EventWithdrawn = "QuestionWithdrawn"
-	EventRendered  = "PageRendered"
-	EventPublished = "PagePublished"
-	EventReceived  = "InkReceived"
-	EventConfirmed = "AnswerConfirmed"
-	EventDelivered = "AnswerDelivered"
+	EventAsked      = "QuestionAsked"
+	EventWithdrawn  = "QuestionWithdrawn"
+	EventRendered   = "PageRendered"
+	EventPublished  = "PagePublished"
+	EventReceived   = "InkReceived"
+	EventRecognized = "AnswerRecognized"
+	EventConfirming = "ConfirmationRequested"
+	EventConfirmed  = "AnswerConfirmed"
+	EventRejected   = "AnswerRejected"
+	EventDelivered  = "AnswerDelivered"
 )
 
 // Statuses a question moves through; the inbox shows every one but the last two.
 const (
-	StatusAsked     = "asked"
-	StatusRendered  = "rendered"
-	StatusPublished = "published"
-	StatusReceived  = "received"
-	StatusConfirmed = "confirmed"
-	StatusDelivered = "delivered"
-	StatusWithdrawn = "withdrawn"
+	StatusAsked      = "asked"
+	StatusRendered   = "rendered"
+	StatusPublished  = "published"
+	StatusReceived   = "received"
+	StatusConfirming = "confirming"
+	StatusConfirmed  = "confirmed"
+	StatusDelivered  = "delivered"
+	StatusWithdrawn  = "withdrawn"
 )
 
 // Asked is the payload of QuestionAsked: the question as the agent gave it
@@ -94,7 +98,7 @@ func (in *Inbox) Apply(e eventlog.Envelope) error {
 	switch e.Type {
 	case EventAsked:
 		return in.applyAsked(e)
-	case EventRendered, EventPublished, EventReceived, EventConfirmed:
+	case EventRendered, EventPublished, EventReceived, EventRecognized, EventConfirming, EventConfirmed:
 		in.setStatus(questionID(e.Subject), statusFor(e.Type))
 	case EventDelivered, EventWithdrawn:
 		delete(in.rows, questionID(e.Subject))
@@ -136,10 +140,14 @@ func statusFor(eventType string) string {
 		return StatusRendered
 	case EventPublished:
 		return StatusPublished
-	case EventReceived:
+	case EventReceived, EventRecognized:
 		return StatusReceived
+	case EventConfirming:
+		return StatusConfirming
 	case EventConfirmed:
 		return StatusConfirmed
+	case EventDelivered:
+		return StatusDelivered
 	default:
 		return StatusAsked
 	}
@@ -193,3 +201,103 @@ func (in *Inbox) Open() int {
 
 // Now is the clock the slices use; tests replace it.
 var Now = time.Now
+
+// Questions is the projection behind `ink answer`: every question the hub
+// has seen, its status, and the confirmed answer with the owner's words.
+// Unlike the Inbox it keeps delivered and withdrawn questions.
+type Questions struct {
+	mu   sync.RWMutex
+	byID map[string]api.Question
+}
+
+// NewQuestions returns an empty projection.
+func NewQuestions() *Questions { return &Questions{byID: map[string]api.Question{}} }
+
+// confirmed is the part of an AnswerConfirmed payload the projection keeps.
+type confirmed struct {
+	Words       string `json:"words"`
+	ConfirmedAt string `json:"confirmed_at"`
+}
+
+// Apply folds one event; unrelated types are ignored.
+func (qs *Questions) Apply(e eventlog.Envelope) error {
+	qs.mu.Lock()
+	defer qs.mu.Unlock()
+
+	id := questionID(e.Subject)
+
+	switch e.Type {
+	case EventAsked:
+		return qs.applyAsked(e, id)
+	case EventConfirmed:
+		return qs.applyConfirmed(e, id)
+	case EventRendered, EventPublished, EventReceived, EventRecognized, EventConfirming, EventDelivered:
+		qs.setStatus(id, statusFor(e.Type))
+	case EventWithdrawn:
+		qs.setStatus(id, StatusWithdrawn)
+	}
+
+	return nil
+}
+
+func (qs *Questions) applyAsked(e eventlog.Envelope, id string) error {
+	var d Asked
+	if err := json.Unmarshal(e.Data, &d); err != nil {
+		return fmt.Errorf("inbox: bad %s data in %s: %w", e.Type, e.ID, err)
+	}
+
+	var h head
+	if err := json.Unmarshal(d.Question, &h); err != nil {
+		return fmt.Errorf("inbox: bad question in %s: %w", e.ID, err)
+	}
+
+	qs.byID[id] = api.Question{
+		QuestionID: id, Project: e.Project, Kind: h.Kind, Title: h.Title,
+		Critical: h.Critical, Status: StatusAsked, AskedAt: e.At,
+	}
+
+	return nil
+}
+
+func (qs *Questions) applyConfirmed(e eventlog.Envelope, id string) error {
+	q, ok := qs.byID[id]
+	if !ok {
+		return fmt.Errorf("inbox: %s for unknown question %s", e.Type, id)
+	}
+
+	var c confirmed
+	if err := json.Unmarshal(e.Data, &c); err != nil {
+		return fmt.Errorf("inbox: bad %s data in %s: %w", e.Type, e.ID, err)
+	}
+
+	at := e.At
+	if t, err := time.Parse(time.RFC3339Nano, c.ConfirmedAt); err == nil {
+		at = t
+	}
+
+	q.Status = StatusConfirmed
+
+	q.Answer = append(json.RawMessage(nil), e.Data...)
+	q.Words = c.Words
+	q.ConfirmedAt = &at
+	qs.byID[id] = q
+
+	return nil
+}
+
+func (qs *Questions) setStatus(id, status string) {
+	if q, ok := qs.byID[id]; ok {
+		q.Status = status
+		qs.byID[id] = q
+	}
+}
+
+// Get returns one question, or false when the hub never saw it.
+func (qs *Questions) Get(id string) (api.Question, bool) {
+	qs.mu.RLock()
+	defer qs.mu.RUnlock()
+
+	q, ok := qs.byID[id]
+
+	return q, ok
+}

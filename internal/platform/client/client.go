@@ -78,6 +78,13 @@ func (c *Client) Inbox(ctx context.Context, project string) ([]api.InboxRow, err
 	return out, c.call(ctx, http.MethodGet, path, nil, &out)
 }
 
+// Question returns where one question stands, with its answer once confirmed.
+func (c *Client) Question(ctx context.Context, id string) (api.Question, error) {
+	var out api.Question
+
+	return out, c.call(ctx, http.MethodGet, "/v1/questions/"+url.PathEscape(id), nil, &out)
+}
+
 // RegisterProject adds a project.
 func (c *Client) RegisterProject(ctx context.Context, req api.RegisterProjectRequest) (api.Project, error) {
 	var out api.Project

@@ -30,13 +30,14 @@ Usage:
 
 Commands:
   ask <file|->            ask the owner a question (JSON, contracts/question.schema.json)
+  answer <id>             where a question stands; the owner's words once confirmed
   inbox [--project SLUG]  list the open questions
   status                  is inkd up, how many projects and questions
   project add <path> [--slug S] [--name N] [--orchestrator herdr|rex|headless|none]
   project list
   version
 
-Exit codes: 0 ok · 1 error · 2 usage · 3 inkd is not running
+Exit codes: 0 ok · 1 error · 2 usage · 3 inkd is not running · 4 no answer yet
 `
 
 type cli struct {
@@ -87,6 +88,8 @@ func (c *cli) dispatch(cmd string, args []string) int {
 	switch cmd {
 	case "ask":
 		return c.exit(c.ask(args))
+	case "answer":
+		return c.exit(c.answer(args))
 	case "inbox":
 		return c.exit(c.inbox(args))
 	case "status":
@@ -127,6 +130,8 @@ func (c *cli) exit(err error) int {
 		fmt.Fprintln(c.stderr, "ink: inkd is not running: start it with 'inkd' (then 'ink status')")
 
 		return exitUnreachable
+	case errors.Is(err, errPending):
+		return exitPending
 	default:
 		fmt.Fprintln(c.stderr, "ink:", err)
 

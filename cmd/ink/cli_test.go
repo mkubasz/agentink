@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/mkubasz/agentink/internal/app"
 	"github.com/mkubasz/agentink/internal/platform/config"
@@ -176,6 +177,86 @@ func loggedAgents(t *testing.T, dataDir string) []string {
 	}
 
 	return agents
+}
+
+func TestInk_AnswerPendingThenConfirmed(t *testing.T) {
+	t.Parallel()
+
+	socket, dataDir := daemon(t)
+	repo := filepath.Join(filepath.Dir(dataDir), "repos", "shop")
+	_ = os.MkdirAll(repo, 0o750)
+
+	questionID := seedShop(t, socket, repo)
+
+	r := ink(socket, nil, "/", "", "answer", questionID)
+	if r.code != exitPending || !strings.Contains(r.stdout, "no answer yet") {
+		t.Fatalf("pending: %+v", r)
+	}
+
+	if r := ink(socket, nil, "/", "", "answer", "01JBQ4P9V7G3ZK8XW2M5N6C7D8"); r.code != exitError || !strings.Contains(r.stderr, "unknown question") {
+		t.Fatalf("unknown: %+v", r)
+	}
+
+	if r := ink(socket, nil, "/", "", "answer", "not-an-id"); r.code != exitError {
+		t.Fatalf("bad id: %+v", r)
+	}
+
+	// The owner answers (Phase 4 will emit this); here the event is appended
+	// to the log and a restarted daemon replays it.
+	confirmSocket := confirmInLog(t, dataDir, questionID)
+
+	r = ink(confirmSocket, nil, "/", "", "--json", "answer", questionID)
+	if r.code != exitOK || !strings.Contains(r.stdout, `"status": "confirmed"`) || !strings.Contains(r.stdout, "tylko przy kasie") {
+		t.Fatalf("confirmed: %+v", r)
+	}
+}
+
+// confirmInLog appends an AnswerConfirmed for questionID to the shop log and
+// starts a fresh daemon over the same data directory; it returns its socket.
+func confirmInLog(t *testing.T, dataDir, questionID string) string {
+	t.Helper()
+
+	l, err := eventlog.Open(filepath.Join(dataDir, "projects", "shop", "events.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	answer, err := os.ReadFile(filepath.Join("..", "..", "contracts", "examples", "answer", "confirmed.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	now := time.Now()
+	e := eventlog.Envelope{ID: eventlog.NewID(now), Type: "AnswerConfirmed", At: now, Project: "shop", Subject: "question/" + questionID, Rev: 1, Data: answer}
+
+	if err := l.Append(e); err != nil {
+		t.Fatal(err)
+	}
+
+	_ = l.Close()
+
+	socket := filepath.Join(t.TempDir(), "d2.sock")
+
+	a, err := app.New(config.Config{DataDir: dataDir, SocketPath: socket}, "test", slog.New(slog.DiscardHandler))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	ln, err := httpapi.ListenUnix(ctx, socket)
+	if err != nil {
+		cancel()
+		t.Fatal(err)
+	}
+
+	done := make(chan struct{})
+
+	go func() { _ = httpapi.Serve(ctx, ln, a.Handler()); close(done) }()
+
+	t.Cleanup(func() { cancel(); <-done; _ = a.Close() })
+
+	return socket
 }
 
 func TestAgentFromEnv(t *testing.T) {
