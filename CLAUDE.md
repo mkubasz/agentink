@@ -5,7 +5,8 @@
   (provenance), the open spec under `docs/specs/`.
 - **Provenance (ADR 0003):** never open a dark-factory or AI Workflow Engine
   source file while writing code here; take concepts from
-  `docs/architecture/inventory.md` and formats from the spec flow. `just
+  `docs/architecture/inventory.md` and formats from the spec flow
+  (`.claude/skills/spec-flow/references/formats.md`). `just
   provenance` must stay clean.
 - **Layout (ADR 0002):** `main` packages only in `cmd/`; a slice is
   `internal/<context>/<slice>/` with `command.go`, `handler.go`, `events.go`

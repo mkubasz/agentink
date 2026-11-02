@@ -8,8 +8,16 @@ summary) lives in the owner's vault, not here.
 
 AgentInk is also a *consumer* of this folder: the `specflow` context reads
 `## Clarify` sections and writes answers back (docs/adr/0001). The format is
-the spec flow's (`formats.md` of the gist); docs/architecture/inventory.md §7
-records how dark-factory's differed, as a lesson only (ADR 0003).
+the spec flow's (`.claude/skills/spec-flow/references/formats.md`);
+docs/architecture/inventory.md §7 records how dark-factory's differed, as a
+lesson only (ADR 0003).
+
+The flow ships with the repository: the skill, its references and `flow.sh`
+under `.claude/skills/spec-flow/`, the `/spec*` commands under
+`.claude/commands/`, copied from the owner's gist (revision `a389f4e`). A
+clone needs only Claude Code and the Obsidian `Manager` vault
+(`.claude/skills/spec-flow/INSTALL.md`, steps 1, 2, 5 and 6). `flow.sh`
+checks itself with `bash .claude/skills/spec-flow/scripts/flow.test.sh`.
 
 ## Project hook
 
