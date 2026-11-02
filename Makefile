@@ -28,8 +28,12 @@ provenance:
 	  || { echo "provenance: upstream name found outside the allowed files"; exit 1; }
 	@echo "provenance: clean"
 
-e2e:
-	@echo "e2e: Phase 1.7 adds the skeleton"; exit 1
+# The whole loop with stand-ins for the slices later phases add (spec task 1.7):
+# a fake agent runs bin/ink against an in-process inkd; render, publish,
+# ingest, the worker (ADR 0007 API, stub engine), confirmation, syncspec and
+# the adapter are stubs that each phase replaces with the real slice.
+e2e: build
+	$(GO) test ./e2e/ -count=1 -tags e2e -v -run TestE2E 2>&1 | tail -20
 
 worker:
 	$(UV) sync --project worker

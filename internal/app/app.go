@@ -98,5 +98,13 @@ func (a *App) status(w http.ResponseWriter, _ *http.Request) {
 // Handler is the daemon's HTTP API.
 func (a *App) Handler() http.Handler { return a.mux }
 
+// Bus is the daemon's event bus: the seam the end-to-end skeleton uses to
+// stand in for the slices later phases add, and that those slices subscribe
+// to when they land.
+func (a *App) Bus() *bus.Bus { return a.bus }
+
+// DataDir is where the daemon keeps its logs and pages.
+func (a *App) DataDir() string { return a.cfg.DataDir }
+
 // Close releases the store.
 func (a *App) Close() error { return a.store.Close() }
