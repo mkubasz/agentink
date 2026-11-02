@@ -5,8 +5,6 @@ package e2e_test
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -44,36 +42,12 @@ func installStubs(t *testing.T, a *app.App, workerURL string, adapter *fakeAdapt
 	// Phase 3, publishpage: the real slice copies the PDF onto the share and
 	// emits PagePublished with page_dir, path and sha256.
 
-	// Phase 3, ingestink: the reader uploads the annotated file; here it is a
-	// marker file written straight into the page directory.
-	b.Subscribe("stub.ingest", func(ctx context.Context, e eventlog.Envelope) error {
-		pageDir := pageDirOf(e)
-		if pageDir == "" {
-			return fmt.Errorf("stub.ingest: %s carries no page_dir", e.ID)
-		}
-
-		artifact := filepath.Join(pageDir, "answer.mark")
-		content := []byte("fake ink for " + e.Subject)
-
-		if err := os.WriteFile(artifact, content, 0o600); err != nil {
-			return err
-		}
-
-		sum := sha256.Sum256(content)
-		publish(ctx, next(e, "InkReceived", e.Subject, map[string]any{
-			"page_dir": pageDir, "artifact": "answer.mark", "sha256": hex.EncodeToString(sum[:]), "device": "supernote-a5x",
-		}))
-
-		return nil
-	}, "PagePublished")
+	// Phase 3, ingestink: the real slice takes the reader's upload off the
+	// share (uploadInk in pipeline_test.go) and emits InkReceived.
 
 	// Phase 4, recognizeanswer: inkd calls the worker's API (ADR 0007).
 	b.Subscribe("stub.recognize", func(ctx context.Context, e eventlog.Envelope) error {
-		var d struct {
-			PageDir string `json:"page_dir"`
-			Device  string `json:"device"`
-			SHA256  string `json:"sha256"`
-		}
+		var d received
 
 		_ = json.Unmarshal(e.Data, &d)
 
@@ -171,16 +145,6 @@ func next(e eventlog.Envelope, typ, subject string, data any) eventlog.Envelope 
 
 func questionID(subject string) string { return strings.TrimPrefix(subject, "question/") }
 
-func pageDirOf(e eventlog.Envelope) string {
-	var d struct {
-		PageDir string `json:"page_dir"`
-	}
-
-	_ = json.Unmarshal(e.Data, &d)
-
-	return d.PageDir
-}
-
 // specPathOf finds the spec file the question named, under the project's path.
 func specPathOf(t *testing.T, a *app.App, e eventlog.Envelope) string {
 	t.Helper()
@@ -224,12 +188,15 @@ func specPathOf(t *testing.T, a *app.App, e eventlog.Envelope) string {
 	return filepath.Join(projectPath, questionRel)
 }
 
-func answerDoc(pageID string, in struct {
-	PageDir string `json:"page_dir"`
-	Device  string `json:"device"`
-	SHA256  string `json:"sha256"`
-}, ocr map[string]any, status string,
-) map[string]any {
+// received is the part of InkReceived the stand-ins read.
+type received struct {
+	PageDir  string `json:"page_dir"`
+	Artifact string `json:"artifact"`
+	Device   string `json:"device"`
+	SHA256   string `json:"sha256"`
+}
+
+func answerDoc(pageID string, in received, ocr map[string]any, status string) map[string]any {
 	page := readJSON(in.PageDir + "/page.json")
 	fields := map[string]any{}
 
@@ -241,7 +208,7 @@ func answerDoc(pageID string, in struct {
 
 	return map[string]any{
 		"page_id": pageID, "rev": 1, "question_id": page["question_id"], "question_rev": 1, "status": status,
-		"source": map[string]any{"device": in.Device, "artifact": "answer.mark", "sha256": in.SHA256},
+		"source": map[string]any{"device": in.Device, "artifact": in.Artifact, "sha256": in.SHA256},
 		"fields": fields,
 	}
 }

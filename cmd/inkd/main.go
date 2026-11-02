@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/mkubasz/agentink/internal/app"
@@ -39,6 +40,10 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	davAny := fs.Bool("webdav-allow-any", false, "let the share bind outside Tailscale and loopback (development only)")
 	davURL := fs.String("webdav-url", "", "the address readers type in, when a proxy such as `tailscale serve` fronts the share")
 
+	var watch watchFlag
+
+	fs.Var(&watch, "watch", "device=path of a synced folder to poll for ink (repeatable; also $"+config.EnvWatch+")")
+
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
@@ -63,6 +68,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 
 	cfg.WebDAVAllowAny = *davAny
 	cfg.WebDAVURL = *davURL
+	cfg.Watch = append(cfg.Watch, watch...)
 
 	a, err := app.New(cfg, Version, logger)
 	if err != nil {
@@ -87,6 +93,8 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	go func() { errc <- httpapi.Serve(ctx, ln, a.Handler()) }()
 
 	go func() { errc <- serveShare(ctx, cfg, a, stdout, logger) }()
+
+	go a.Watch(ctx)
 
 	var code int
 
@@ -121,4 +129,27 @@ func serveShare(ctx context.Context, cfg config.Config, a *app.App, stdout io.Wr
 	fmt.Fprintf(stdout, "readers' share at %s\n", a.ShareURL())
 
 	return httpapi.Serve(ctx, ln, a.ShareHandler())
+}
+
+// watchFlag collects --watch device=path entries.
+type watchFlag []config.WatchFolder
+
+func (f *watchFlag) String() string {
+	parts := make([]string, 0, len(*f))
+	for _, w := range *f {
+		parts = append(parts, w.Device+"="+w.Path)
+	}
+
+	return strings.Join(parts, ",")
+}
+
+func (f *watchFlag) Set(v string) error {
+	folders, err := config.ParseWatch(v)
+	if err != nil {
+		return err
+	}
+
+	*f = append(*f, folders...)
+
+	return nil
 }

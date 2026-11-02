@@ -50,3 +50,47 @@ func TestResolve_PrecedenceAndDefaults(t *testing.T) {
 		})
 	}
 }
+
+func TestParseWatch_EntriesAndErrors(t *testing.T) {
+	t.Parallel()
+
+	got, err := config.ParseWatch(" boox=/sync/boox , manta=/sync/manta/ ")
+	if err != nil {
+		t.Fatalf("ParseWatch: %v", err)
+	}
+
+	want := []config.WatchFolder{{Device: "boox", Path: "/sync/boox"}, {Device: "manta", Path: "/sync/manta"}}
+	if len(got) != 2 || got[0] != want[0] || got[1] != want[1] {
+		t.Fatalf("got %+v, want %+v", got, want)
+	}
+
+	if got, err := config.ParseWatch(""); err != nil || len(got) != 0 {
+		t.Fatalf("empty spec: %+v, %v", got, err)
+	}
+
+	for _, bad := range []string{"boox", "=/sync", "boox="} {
+		if _, err := config.ParseWatch(bad); err == nil {
+			t.Errorf("ParseWatch(%q) accepted", bad)
+		}
+	}
+}
+
+func TestResolve_ReadsWatchFromEnv(t *testing.T) {
+	t.Parallel()
+
+	env := map[string]string{"XDG_DATA_HOME": "/x", config.EnvWatch: "boox=/sync/boox"}
+
+	cfg, err := config.Resolve("", "", func(k string) string { return env[k] })
+	if err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+
+	if len(cfg.Watch) != 1 || cfg.Watch[0] != (config.WatchFolder{Device: "boox", Path: "/sync/boox"}) {
+		t.Fatalf("Watch = %+v", cfg.Watch)
+	}
+
+	env[config.EnvWatch] = "nonsense"
+	if _, err := config.Resolve("", "", func(k string) string { return env[k] }); err == nil {
+		t.Fatal("bad $AGENTINK_WATCH accepted")
+	}
+}

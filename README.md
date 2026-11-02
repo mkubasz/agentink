@@ -14,4 +14,18 @@ file in the owner's words and delivers it to the right agent.
 
 Licence: all rights reserved (see `LICENSE`).
 
-Status: Phase 1 (platform, contracts). Nothing runs yet.
+## Running it
+
+```bash
+make build
+bin/inkd --webdav-listen :8080 --watch boox=/srv/sync/boox
+```
+
+`inkd` serves the API on a Unix socket and the readers' share on the
+Tailscale interface only (`--webdav-allow-any` for development). A reader
+that uploads over WebDAV is paired with `ink device add <name> --project <slug>`;
+a reader that syncs a folder instead (Syncthing on a Boox) is named with
+`--watch <device>=<path>` or `$AGENTINK_WATCH`.
+
+Status: Phase 3 (share, devices, ingest). Recognition, confirmation and
+delivery are stand-ins in `e2e/` until Phases 4 and 5.

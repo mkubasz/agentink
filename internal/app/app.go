@@ -5,6 +5,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 	"github.com/mkubasz/agentink/internal/inbox/listinbox"
 	"github.com/mkubasz/agentink/internal/ink/adddevice"
 	inkdomain "github.com/mkubasz/agentink/internal/ink/domain"
+	"github.com/mkubasz/agentink/internal/ink/ingestink"
 	"github.com/mkubasz/agentink/internal/ink/listdevices"
 	"github.com/mkubasz/agentink/internal/ink/publishpage"
 	"github.com/mkubasz/agentink/internal/ink/revokedevice"
@@ -42,6 +44,8 @@ type App struct {
 	inbox     *inboxdomain.Inbox
 	questions *inboxdomain.Questions
 	devices   *inkdomain.Devices
+	pages     *inkdomain.Pages
+	ingest    *ingestink.Handler
 	share     *webdav.Handler
 	mux       *http.ServeMux
 	logger    *slog.Logger
@@ -60,11 +64,12 @@ func New(cfg config.Config, version string, logger *slog.Logger) (*App, error) {
 	a := &App{
 		cfg: cfg, version: version, store: store,
 		registry: projdomain.NewRegistry(), inbox: inboxdomain.NewInbox(), questions: inboxdomain.NewQuestions(),
-		devices: inkdomain.NewDevices(),
-		mux:     http.NewServeMux(),
+		devices: inkdomain.NewDevices(), pages: inkdomain.NewPages(),
+		mux: http.NewServeMux(),
 	}
 	a.bus = bus.New(store, logger)
 	a.logger = logger
+	a.ingest = ingestink.New(a.bus, a.pages, logger, nil)
 
 	if err := a.wireShare(); err != nil {
 		_ = store.Close()
@@ -76,6 +81,7 @@ func New(cfg config.Config, version string, logger *slog.Logger) (*App, error) {
 	a.bus.Subscribe("inbox.projection", func(_ context.Context, e eventlog.Envelope) error { return a.inbox.Apply(e) })
 	a.bus.Subscribe("inbox.questions", func(_ context.Context, e eventlog.Envelope) error { return a.questions.Apply(e) })
 	a.bus.Subscribe("ink.devices", func(_ context.Context, e eventlog.Envelope) error { return a.devices.Apply(e) })
+	a.bus.Subscribe("ink.pages", func(_ context.Context, e eventlog.Envelope) error { return a.pages.Apply(e) })
 	a.wireRender()
 	a.bus.React("ink.publishpage", publishpage.New(a.bus, a.share, nil).Handle, publishpage.EventRendered)
 
@@ -90,10 +96,10 @@ func New(cfg config.Config, version string, logger *slog.Logger) (*App, error) {
 	return a, nil
 }
 
-// wireShare builds the readers' WebDAV tree under <data>/dav; the listener
-// itself is the daemon's (see ShareHandler and ShareListen).
+// wireShare builds the readers' WebDAV tree under <data>/dav and hands every
+// upload to ingestink; the listener itself is the daemon's (see ShareHandler).
 func (a *App) wireShare() error {
-	share, err := webdav.New(filepath.Join(a.cfg.DataDir, "dav"), a.devices, inkdomain.Allowed, nil, webdav.DefaultMaxUpload)
+	share, err := webdav.New(filepath.Join(a.cfg.DataDir, "dav"), a.devices, inkdomain.Allowed, a.onPut, webdav.DefaultMaxUpload)
 	if err != nil {
 		return err
 	}
@@ -110,6 +116,31 @@ func (a *App) wireShare() error {
 	}
 
 	return nil
+}
+
+// onPut is the share's hook: an upload is ink until ingestink says otherwise.
+func (a *App) onPut(p webdav.Put) {
+	up := ingestink.Upload{Project: p.Project, Device: p.Device.Name, Rel: p.Rel, Path: p.Path, Size: p.Size, Source: "webdav", At: p.At}
+
+	if err := a.ingest.Ingest(context.Background(), up); err != nil && !errors.Is(err, ingestink.ErrIgnored) {
+		a.logger.Error("ingest from share failed", "project", p.Project, "file", p.Rel, "err", err)
+	}
+}
+
+// Watch polls the configured sync folders until ctx is done (spec 3.2b). It
+// returns at once when none is configured.
+func (a *App) Watch(ctx context.Context) {
+	if len(a.cfg.Watch) == 0 {
+		return
+	}
+
+	folders := make([]ingestink.Folder, 0, len(a.cfg.Watch))
+	for _, w := range a.cfg.Watch {
+		folders = append(folders, ingestink.Folder{Device: w.Device, Root: w.Path})
+		a.logger.Info("watching sync folder", "device", w.Device, "path", w.Path)
+	}
+
+	ingestink.NewWatcher(a.ingest, folders, 0, a.logger).Run(ctx)
 }
 
 // ShareHandler is the readers' WebDAV tree, served by inkd on its own listener.

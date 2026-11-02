@@ -2,15 +2,17 @@
 
 // Package e2e runs the whole loop of the brief with stand-ins for the slices
 // later phases add (spec task 1.7). A fake agent runs bin/ink against an
-// in-process inkd; the stubs in stubs_test.go play render, publish, ingest,
-// the worker, confirmation, syncspec and the adapter. Each phase replaces one
-// stub with the real slice and this test keeps passing.
+// in-process inkd and a reader uploads to the real share; the stubs in
+// stubs_test.go play the worker, confirmation, syncspec and the adapter. Each
+// phase replaces one stub with the real slice and this test keeps passing.
 package e2e_test
 
 import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -71,9 +73,11 @@ func TestE2E_AskToDelivery(t *testing.T) {
 		t.Fatalf("ask: %v", err)
 	}
 
-	// The stubs run synchronously on the bus, so the chain is complete when
-	// ask returns; a real pipeline would take minutes and the agent would be
-	// resumed by its orchestrator. Wait briefly anyway for the fake worker.
+	// Render and publish ran on the bus before ask returned, so the page is on
+	// the share; the reader writes on it and uploads it back. The stubs run
+	// synchronously from there, so the chain is complete when the PUT returns;
+	// a real loop takes minutes and the orchestrator resumes the agent.
+	uploadInk(t, a, ink, env, repo, dataDir)
 	waitFor(t, 5*time.Second, func() bool { return adapter.delivered() == 1 })
 
 	assertSpecAnswered(t, specPath)
@@ -147,6 +151,50 @@ func assertChain(t *testing.T, logPath string) {
 	want := "ProjectRegistered QuestionAsked PageRendered PagePublished InkReceived AnswerRecognized AnswerConfirmed SpecChanged AnswerDelivered"
 	if got := strings.Join(eventTypes(t, logPath), " "); got != want {
 		t.Errorf("event chain:\n got %s\nwant %s", got, want)
+	}
+}
+
+// uploadInk plays the reader: the owner pairs it with ink device add, it
+// authenticates to the share with the token and PUTs the annotated PDF over
+// the one it downloaded (what a Supernote does on sync).
+func uploadInk(t *testing.T, a *app.App, ink string, env []string, repo, dataDir string) {
+	t.Helper()
+
+	var paired struct {
+		Token string `json:"token"`
+	}
+
+	if err := json.Unmarshal(mustRun(t, inkCmd(ink, "--json", "device", "add", "manta", "--project", "shop"), env, repo), &paired); err != nil || paired.Token == "" {
+		t.Fatalf("device add: %v", err)
+	}
+
+	published, err := filepath.Glob(filepath.Join(dataDir, "dav", "Ink", "shop", "*.pdf"))
+	if err != nil || len(published) != 1 {
+		t.Fatalf("published pages on the share: %v (%v)", published, err)
+	}
+
+	share := httptest.NewServer(a.ShareHandler())
+	t.Cleanup(share.Close)
+
+	url := share.URL + "/Ink/shop/" + filepath.Base(published[0])
+	body := strings.NewReader("%PDF-1.7 the original plus the owner's ink")
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPut, url, body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.SetBasicAuth("manta", paired.Token)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("PUT: %v", err)
+	}
+
+	defer resp.Body.Close() //nolint:errcheck // test
+
+	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("PUT %s: %s", url, resp.Status)
 	}
 }
 
