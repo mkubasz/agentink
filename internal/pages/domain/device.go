@@ -27,15 +27,19 @@ func (d Device) SizeMM() (w, h float64) {
 	return round2(float64(d.WidthPx) / d.PPI * 25.4), round2(float64(d.HeightPx) / d.PPI * 25.4)
 }
 
-// DefaultDevice is used when a project names none.
-const DefaultDevice = "supernote-a5x"
+// DefaultDevice is used when a project names none: the owner's Supernote
+// Manta (2026-11-02).
+const DefaultDevice = "supernote-manta"
 
+// Sizes are portrait, in the panel's grayscale resolution.
 var profiles = map[string]Device{
 	"supernote-a5x":   {Name: "supernote-a5x", WidthPx: 1404, HeightPx: 1872, PPI: 226, Format: "pdf"},
 	"supernote-a6x":   {Name: "supernote-a6x", WidthPx: 1404, HeightPx: 1872, PPI: 300, Format: "pdf"},
 	"supernote-nomad": {Name: "supernote-nomad", WidthPx: 1404, HeightPx: 1872, PPI: 300, Format: "pdf"},
 	"supernote-manta": {Name: "supernote-manta", WidthPx: 1920, HeightPx: 2560, PPI: 300, Format: "pdf"},
 	"boox-note-air":   {Name: "boox-note-air", WidthPx: 1404, HeightPx: 1872, PPI: 227, Format: "pdf"},
+	// 13.3" Kaleido 3: 3200×2400 grayscale at 300 ppi (1600×1200 in colour); the owner's Boox.
+	"boox-tab-x-c": {Name: "boox-tab-x-c", WidthPx: 2400, HeightPx: 3200, PPI: 300, Format: "pdf"},
 }
 
 // Lookup returns a device profile by name.

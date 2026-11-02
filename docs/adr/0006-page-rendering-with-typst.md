@@ -67,8 +67,12 @@ linux-musl binary (release 2026-07-17; 0.15.0 is from 2026-06-15):
   e-ink display and zone coordinates need no scaling. Device profiles
   (`internal/pages/domain`): `supernote-a5x` 1404×1872 @226 ppi,
   `supernote-a6x` and `supernote-nomad` 1404×1872 @300, `supernote-manta`
-  1920×2560 @300, `boox-note-air` 1404×1872 @227; the default is
-  `supernote-a5x` (`render.device`).
+  1920×2560 @300 (162.6×216.8 mm), `boox-note-air` 1404×1872 @227,
+  `boox-tab-x-c` 2400×3200 @300 grayscale (203.2×270.9 mm; its colour
+  layer is 1600×1200 @150 and irrelevant to black-on-white pages). The
+  owner has a Manta and a Tab X C (2026-11-02), so the default is
+  `supernote-manta` (`AGENTINK_DEVICE` to change) and the device gate rows
+  name both.
 - **Inputs.** The page document (`contracts/page.schema.json`) plus the QR
   matrix go to the template as `--input page=<json>`; the template never
   concatenates strings into Typst source, so handwriting and agent text stay

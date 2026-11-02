@@ -146,21 +146,32 @@ func TestQR_PayloadIsAlphanumeric(t *testing.T) {
 func TestDevices_SizesAndLookup(t *testing.T) {
 	t.Parallel()
 
-	d, err := domain.Lookup("supernote-a5x")
-	if err != nil {
-		t.Fatal(err)
+	sizes := map[string][2]float64{
+		"supernote-a5x":   {157.79, 210.39},
+		"supernote-manta": {162.56, 216.75},
+		"boox-tab-x-c":    {203.2, 270.93},
 	}
 
-	w, h := d.SizeMM()
-	if w != 157.79 || h != 210.39 {
-		t.Fatalf("a5x size = %v x %v mm", w, h)
+	for name, want := range sizes {
+		d, err := domain.Lookup(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if w, h := d.SizeMM(); w != want[0] || h != want[1] {
+			t.Errorf("%s size = %v x %v mm, want %v x %v", name, w, h, want[0], want[1])
+		}
+	}
+
+	if d, _ := domain.Lookup(""); d.Name != "supernote-manta" || domain.DefaultDevice != "supernote-manta" {
+		t.Fatalf("default device = %q", d.Name)
 	}
 
 	if _, err := domain.Lookup("kindle"); !errors.Is(err, domain.ErrUnknownDevice) {
 		t.Fatalf("err = %v", err)
 	}
 
-	if len(domain.Devices()) < 5 {
+	if len(domain.Devices()) < 6 {
 		t.Fatalf("devices = %v", domain.Devices())
 	}
 }

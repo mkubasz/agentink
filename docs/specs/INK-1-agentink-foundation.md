@@ -39,7 +39,7 @@ Build AgentInk from scratch, taking dark-factory's ideas and none of its code: a
 - [ ] 3.1b Device pairing and revocation: `ink device add <name>` prints a one-time pairing code, tokens are hashed at rest, `ink device revoke <name>` ends access, a device sees only the roots it is scoped to · proved by `TestDevice_PairRevoke`, `TestDevice_RevokedTokenGets401`
 - [ ] 3.2 `ingestink`: an upload becomes `InkReceived` — **must not** emit twice for the same bytes of the same page (dedupe key `page_id` + `rev` + sha256), must ignore 0-byte and non-PDF/`.mark` files with an `IngestRejected` event · proved by `TestIngest_UploadEmitsInkReceived`, `TestIngest_SameBytesOnce`, `TestIngest_RejectsEmptyAndUnknown`
 - [ ] 3.2b `ingestink` watches configured sync folders too (Boox returns the annotated PDF through Syncthing, brief §6.3) · proved by `TestIngest_WatchedFolderEmitsInkReceived`
-- [ ] 3.3 Latency of the full loop on a Boox and a Supernote → `docs/architecture/latency.md` — owner-started gate row
+- [ ] 3.3 Latency of the full loop on the owner's Supernote Manta (WebDAV) and Boox Tab X C (Syncthing folder) → `docs/architecture/latency.md` — owner-started gate row
 - [ ] 3.4 AgentInk's threat model — `docs/architecture/security.md`: devices, tokens, the tailnet, handwriting as untrusted data, what a stamp gates (brief §7) · proved by the owner's review and by the tests it names
 - [ ] 4.1 `worker/`: `inkworker serve` (ADR 0007: Unix socket, `POST /v1/recognize`, `POST /v1/bench`, `GET /v1/engines`, `GET /healthz`), supervised by `inkd`; parse PDF/`.mark`/`.note`, align on QR and corner marks, crop zones, deterministic boxes, `stub` + one real engine, CER harness over `worker/samples/` (private) with DuckDB over the results; a run writes into `<page-dir>/.run-<ulid>/` and renames on success; `inkd` abandons a request after `worker.timeout` (default 5 min) and emits `RecognitionFailed` — D5, D9 · proved by `uv run --project worker pytest`, `TestWorkerSupervisor_RestartsAndTimesOut`, `TestRecognize_AbandonedRunLeavesNoPartialOutput`
 - [ ] 4.2 `recognizeanswer` / `confirmanswer`: recognized text becomes the owner's words only when every text field is at or above `ocr.confidence_min` (default 0.9), else after the confirmation page; checkbox-only answers carry the option label and any free text · proved by `TestRecognize_LowConfidenceRequestsConfirmation`, `TestConfirm_RejectsStalePage`, `TestConfirm_RawOcrNeverLeavesOcrJson`
@@ -54,7 +54,7 @@ Build AgentInk from scratch, taking dark-factory's ideas and none of its code: a
 |---|---|---|---|
 | AgentInk's Go packages and the worker pass their tests and lint; no upstream name in the tree | local | `make test && make lint && make provenance` | — |
 | A fake agent's `ink ask decision.json` ends with the answer in the spec file (`clarify answered`) and a `prompt` on the fake herdr that carries no answer text, through a WebDAV upload from `testdata/` and the stub engine | local | `make e2e` | — |
-| A page round-trips on a real Boox (Syncthing folder) and a real Supernote (WebDAV); the latency is in `docs/architecture/latency.md` | devices — the owner starts it | `ink ask testdata/decision.json` and the reader | — |
+| A page round-trips on the owner's Supernote Manta (WebDAV, 1920×2560 @300) and Boox Tab X C (Syncthing folder, 2400×3200 @300); the latency is in `docs/architecture/latency.md` | devices — the owner starts it | `ink ask testdata/decision.json` and the reader | — |
 | The chosen OCR engine reads the owner's Polish samples with CER ≤ 0.15 on text fields and 0 errors on boxes (threshold *assumed*; the owner sets the number) | local, or paid when the engine is an API — the owner starts it | `uv run --project worker inkworker bench worker/samples` | — |
 
 ## Clarify
@@ -122,3 +122,4 @@ The architect reads it as "no SQLite index; DuckDB or Qdrant instead" ("chrome" 
 - 2026-11-02 — the repository github.com/mkubasz/agentink attached and `main` pushed; developer: 1.4a landed (`ink answer`, exit code 4 = no answer yet)
 - 2026-11-02 — developer: 1.6 and 1.7 landed; Phase 1 complete except 1.4b (`ink show`, `ink brief`, deferred to the pages phases)
 - 2026-11-02 — developer: 2.1 landed (pages context, Typst decision page, renderpage in inkd; the e2e render stand-in replaced by the real slice); the bus distinguishes projections (replayed) from reactive slices (live only)
+- 2026-11-02 — owner: "Manta mam, onyx boox tab xc" — device profiles `supernote-manta` (default) and `boox-tab-x-c` recorded; the device gate rows name them
